@@ -1,0 +1,21 @@
+.DS_Store
+
+# Python
+backend/.venv/
+backend/__pycache__/
+backend/.pytest_cache/
+**/__pycache__/
+*.pyc
+backend/single_origin.db
+
+# Node
+frontend/node_modules/
+frontend/.svelte-kit/
+frontend/build/
+
+# Env files
+backend/.env
+frontend/.env
+
+approve.sh
+.env

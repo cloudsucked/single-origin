@@ -1,0 +1,27 @@
+stages: [review, test]
+
+include:
+  - component: $CI_SERVER_FQDN/cloudflare/ci/ai/opencode@~latest
+    inputs:
+      runOnMR: true
+      stage: review
+  
+  - component: $CI_SERVER_FQDN/cloudflare/ci/pnpm/run@~latest
+    inputs:
+      stage: test
+      jobPrefix: "frontend"
+      runOnMR: true
+      runOnBranches: ^(main)$
+      workDir: ./frontend
+      PNPM_VERSION: "latest-10"
+      PNPM_RUN_TARGET: "check"
+
+  - component: $CI_SERVER_FQDN/cloudflare/ci/python/test@~latest
+    inputs:
+      stage: test
+      jobPrefix: "backend"
+      runOnMR: true
+      runOnBranches: ^(main)$
+      pythonVersion: "3.12"
+      workDir: ./backend
+      TEST_PATH: "tests"
