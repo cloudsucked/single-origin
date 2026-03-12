@@ -46,6 +46,23 @@
 - `POST /graphql` returns product data.
 - Login/register/contact forms render with Turnstile widget placeholders.
 
+## OpenAPI Maintenance
+
+- Runtime schema endpoint: `http://localhost:8000/openapi.json`
+- Runtime docs endpoint: `http://localhost:8000/api-docs`
+
+Regenerate the committed artifact after route/schema changes:
+
+```bash
+.venv/bin/python scripts/export-openapi.py
+```
+
+Check for spec drift:
+
+```bash
+.venv/bin/python scripts/export-openapi.py --check
+```
+
 ## Complexity Score Verification
 
 The app emits `X-SO-Complexity-Score` on query-heavy endpoints used for complexity-based rate limiting.
