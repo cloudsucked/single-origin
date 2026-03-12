@@ -39,6 +39,24 @@ Covered endpoints:
 
 - `docs/specs/single-origin-design.md` — source requirements/specification copied from the contentpipeline project.
 
+## OpenAPI Spec
+
+- Runtime OpenAPI JSON: `GET /openapi.json`
+- Runtime Swagger UI: `GET /api-docs` (redirects to `/docs`)
+- Committed artifact: `docs/openapi/single-origin.openapi.json`
+
+Regenerate the committed OpenAPI artifact:
+
+```bash
+.venv/bin/python scripts/export-openapi.py
+```
+
+Validate that the committed spec matches the generated backend schema:
+
+```bash
+.venv/bin/python scripts/export-openapi.py --check
+```
+
 ## Build Plan
 
 - `docs/plans/build-single-origin-plan.md` — MVP-first implementation plan with VM-native learner runtime.

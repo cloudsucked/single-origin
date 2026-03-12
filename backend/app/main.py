@@ -21,7 +21,35 @@ from app.routes.subscriptions import router as subscriptions_router
 from app.routes.turnstile import router as turnstile_router
 from app.routes.wholesale import router as wholesale_router
 
-app = FastAPI(title=settings.app_name, version=settings.app_version)
+OPENAPI_TAGS = [
+    {"name": "auth", "description": "Token issuance, registration, refresh, and JWKS endpoints."},
+    {"name": "auth-forms", "description": "Form-based login and registration handlers used by the web UI."},
+    {"name": "contact", "description": "Contact form APIs and form post handlers."},
+    {"name": "turnstile", "description": "Turnstile verification and challenge simulation endpoints."},
+    {"name": "products", "description": "Catalog and product detail endpoints."},
+    {"name": "cart", "description": "Cart retrieval and mutation endpoints."},
+    {"name": "orders", "description": "Customer order placement, returns, and listing endpoints."},
+    {"name": "account", "description": "Account profile, subscription, and order history endpoints."},
+    {"name": "admin", "description": "Admin portal APIs for dashboard and management operations."},
+    {"name": "subscriptions", "description": "Subscription lifecycle and shipment endpoints."},
+    {"name": "wholesale", "description": "Wholesale inventory, order, and invoicing endpoints."},
+    {"name": "sensors", "description": "Synthetic event and telemetry ingestion endpoints for lab exercises."},
+    {"name": "ai", "description": "AI chat and recommendation endpoints used for Firewall for AI exercises."},
+    {"name": "misc", "description": "Search, upload, scripts, and miscellaneous support endpoints."},
+    {"name": "graphql", "description": "GraphQL and GraphiQL endpoints for API Shield depth and payload testing."},
+]
+
+
+app = FastAPI(
+    title=settings.app_name,
+    version=settings.app_version,
+    description=(
+        "Single Origin reference API used for AppSec labs. "
+        "Includes REST, GraphQL, AI, and form-based flows intentionally designed "
+        "for validation, hardening, and detection exercises."
+    ),
+    openapi_tags=OPENAPI_TAGS,
+)
 
 app.add_middleware(
     CORSMiddleware,
