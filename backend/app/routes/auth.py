@@ -7,7 +7,8 @@ from fastapi.responses import JSONResponse
 from jose import jwt
 
 from app.config import settings
-from app.schemas.auth import LoginRequest, RegisterRequest
+from app.schemas.auth import AuthResponse, LoginRequest, RegisterRequest
+from app.schemas.common import ErrorResponse
 from app.services.repository import create_user, get_user_by_email
 from app.services.turnstile import verify_turnstile_token
 
@@ -39,7 +40,12 @@ def _to_user_dict(user: dict) -> dict:
     }
 
 
-@router.post("/login")
+@router.post(
+    "/login",
+    response_model=AuthResponse,
+    responses={401: {"model": ErrorResponse, "description": "Invalid email or password."}},
+    summary="Authenticate with JSON payload",
+)
 async def login_api(payload: LoginRequest):
     user = get_user_by_email(payload.email)
     if not user or user["password"] != payload.password:
@@ -48,7 +54,12 @@ async def login_api(payload: LoginRequest):
     return {"token": _issue_token(user_dict), "user": user_dict}
 
 
-@router.post("/register")
+@router.post(
+    "/register",
+    response_model=AuthResponse,
+    responses={409: {"model": ErrorResponse, "description": "Email already exists."}},
+    summary="Register a user with JSON payload",
+)
 async def register_api(payload: RegisterRequest):
     if get_user_by_email(payload.email):
         return JSONResponse({"error": "email_already_exists"}, status_code=409)
@@ -66,7 +77,16 @@ async def jwks() -> dict:
     return {"keys": []}
 
 
-@form_router.post("/login")
+@form_router.post(
+    "/login",
+    response_model=AuthResponse,
+    responses={
+        400: {"model": ErrorResponse, "description": "Turnstile response missing."},
+        401: {"model": ErrorResponse, "description": "Invalid email or password."},
+        403: {"model": ErrorResponse, "description": "Turnstile verification failed."},
+    },
+    summary="Authenticate with form payload",
+)
 async def login_form(
     request: Request,
     email: str = Form(...),
@@ -99,7 +119,16 @@ async def login_form(
     return {"token": _issue_token(user_dict), "user": user_dict}
 
 
-@form_router.post("/register")
+@form_router.post(
+    "/register",
+    response_model=AuthResponse,
+    responses={
+        400: {"model": ErrorResponse, "description": "Turnstile response missing."},
+        403: {"model": ErrorResponse, "description": "Turnstile verification failed."},
+        409: {"model": ErrorResponse, "description": "Email already exists."},
+    },
+    summary="Register with form payload",
+)
 async def register_form(
     request: Request,
     email: str = Form(...),

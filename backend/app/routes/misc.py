@@ -2,16 +2,24 @@ from __future__ import annotations
 
 import json
 
-from fastapi import APIRouter, File, Response as FastAPIResponse, UploadFile
+from fastapi import APIRouter, File, Query, Response as FastAPIResponse, UploadFile
 from fastapi.responses import PlainTextResponse, Response
 
+from app.schemas.products import SearchResponse
 from app.services.complexity import COMPLEXITY_HEADER, score_search_query
 
 router = APIRouter(tags=["misc"])
 
 
-@router.get("/api/v1/search")
-async def search(response: FastAPIResponse, q: str = ""):
+@router.get(
+    "/api/v1/search",
+    response_model=SearchResponse,
+    summary="Search products by query",
+)
+async def search(
+    response: FastAPIResponse,
+    q: str = Query(default="", description="Free-text search query", examples=["fruit-forward pour over"]),
+):
     response.headers[COMPLEXITY_HEADER] = str(score_search_query(q))
     return {"query": q, "results": [{"type": "product", "id": 1, "name": "Yirgacheffe Reserve"}]}
 

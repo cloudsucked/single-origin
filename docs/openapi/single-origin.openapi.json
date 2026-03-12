@@ -1,6 +1,52 @@
 {
   "components": {
     "schemas": {
+      "AuthResponse": {
+        "properties": {
+          "token": {
+            "title": "Token",
+            "type": "string"
+          },
+          "user": {
+            "$ref": "#/components/schemas/AuthUser"
+          }
+        },
+        "required": [
+          "token",
+          "user"
+        ],
+        "title": "AuthResponse",
+        "type": "object"
+      },
+      "AuthUser": {
+        "properties": {
+          "email": {
+            "format": "email",
+            "title": "Email",
+            "type": "string"
+          },
+          "id": {
+            "title": "Id",
+            "type": "integer"
+          },
+          "name": {
+            "title": "Name",
+            "type": "string"
+          },
+          "role": {
+            "title": "Role",
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "email",
+          "name",
+          "role"
+        ],
+        "title": "AuthUser",
+        "type": "object"
+      },
       "Body_login_form_login_post": {
         "properties": {
           "cf_turnstile_response": {
@@ -130,6 +176,112 @@
         "title": "CartItemWrite",
         "type": "object"
       },
+      "ChatChoice": {
+        "properties": {
+          "index": {
+            "title": "Index",
+            "type": "integer"
+          },
+          "message": {
+            "$ref": "#/components/schemas/ChatChoiceMessage"
+          }
+        },
+        "required": [
+          "index",
+          "message"
+        ],
+        "title": "ChatChoice",
+        "type": "object"
+      },
+      "ChatChoiceMessage": {
+        "properties": {
+          "content": {
+            "title": "Content",
+            "type": "string"
+          },
+          "role": {
+            "title": "Role",
+            "type": "string"
+          }
+        },
+        "required": [
+          "role",
+          "content"
+        ],
+        "title": "ChatChoiceMessage",
+        "type": "object"
+      },
+      "ChatMessage": {
+        "properties": {
+          "content": {
+            "title": "Content",
+            "type": "string"
+          },
+          "role": {
+            "title": "Role",
+            "type": "string"
+          }
+        },
+        "required": [
+          "role",
+          "content"
+        ],
+        "title": "ChatMessage",
+        "type": "object"
+      },
+      "ChatRequest": {
+        "properties": {
+          "messages": {
+            "items": {
+              "$ref": "#/components/schemas/ChatMessage"
+            },
+            "title": "Messages",
+            "type": "array"
+          },
+          "model": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Model"
+          }
+        },
+        "required": [
+          "messages"
+        ],
+        "title": "ChatRequest",
+        "type": "object"
+      },
+      "ChatResponse": {
+        "properties": {
+          "choices": {
+            "items": {
+              "$ref": "#/components/schemas/ChatChoice"
+            },
+            "title": "Choices",
+            "type": "array"
+          },
+          "id": {
+            "title": "Id",
+            "type": "string"
+          },
+          "object": {
+            "title": "Object",
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "object",
+          "choices"
+        ],
+        "title": "ChatResponse",
+        "type": "object"
+      },
       "ContactRequest": {
         "properties": {
           "email": {
@@ -152,6 +304,98 @@
           "message"
         ],
         "title": "ContactRequest",
+        "type": "object"
+      },
+      "DetailErrorResponse": {
+        "properties": {
+          "detail": {
+            "title": "Detail",
+            "type": "string"
+          }
+        },
+        "required": [
+          "detail"
+        ],
+        "title": "DetailErrorResponse",
+        "type": "object"
+      },
+      "ErrorResponse": {
+        "properties": {
+          "error": {
+            "title": "Error",
+            "type": "string"
+          }
+        },
+        "required": [
+          "error"
+        ],
+        "title": "ErrorResponse",
+        "type": "object"
+      },
+      "GraphQLError": {
+        "properties": {
+          "message": {
+            "title": "Message",
+            "type": "string"
+          }
+        },
+        "required": [
+          "message"
+        ],
+        "title": "GraphQLError",
+        "type": "object"
+      },
+      "GraphQLRequest": {
+        "properties": {
+          "query": {
+            "title": "Query",
+            "type": "string"
+          },
+          "variables": {
+            "anyOf": [
+              {
+                "additionalProperties": true,
+                "type": "object"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Variables"
+          }
+        },
+        "required": [
+          "query"
+        ],
+        "title": "GraphQLRequest",
+        "type": "object"
+      },
+      "GraphQLResponse": {
+        "properties": {
+          "data": {
+            "additionalProperties": true,
+            "title": "Data",
+            "type": "object"
+          },
+          "errors": {
+            "anyOf": [
+              {
+                "items": {
+                  "$ref": "#/components/schemas/GraphQLError"
+                },
+                "type": "array"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Errors"
+          }
+        },
+        "required": [
+          "data"
+        ],
+        "title": "GraphQLResponse",
         "type": "object"
       },
       "HTTPValidationError": {
@@ -184,6 +428,240 @@
           "password"
         ],
         "title": "LoginRequest",
+        "type": "object"
+      },
+      "Product": {
+        "properties": {
+          "category": {
+            "title": "Category",
+            "type": "string"
+          },
+          "description": {
+            "title": "Description",
+            "type": "string"
+          },
+          "id": {
+            "title": "Id",
+            "type": "integer"
+          },
+          "name": {
+            "title": "Name",
+            "type": "string"
+          },
+          "origin": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Origin"
+          },
+          "price": {
+            "title": "Price",
+            "type": "number"
+          },
+          "roast_level": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Roast Level"
+          },
+          "slug": {
+            "title": "Slug",
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "name",
+          "slug",
+          "category",
+          "description",
+          "price"
+        ],
+        "title": "Product",
+        "type": "object"
+      },
+      "ProductDeleteResponse": {
+        "properties": {
+          "deleted": {
+            "title": "Deleted",
+            "type": "boolean"
+          },
+          "id": {
+            "title": "Id",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "deleted",
+          "id"
+        ],
+        "title": "ProductDeleteResponse",
+        "type": "object"
+      },
+      "ProductDetail": {
+        "properties": {
+          "category": {
+            "title": "Category",
+            "type": "string"
+          },
+          "description": {
+            "title": "Description",
+            "type": "string"
+          },
+          "farm": {
+            "$ref": "#/components/schemas/ProductFarm"
+          },
+          "id": {
+            "title": "Id",
+            "type": "integer"
+          },
+          "name": {
+            "title": "Name",
+            "type": "string"
+          },
+          "origin": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Origin"
+          },
+          "price": {
+            "title": "Price",
+            "type": "number"
+          },
+          "roast_level": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Roast Level"
+          },
+          "slug": {
+            "title": "Slug",
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "name",
+          "slug",
+          "category",
+          "description",
+          "price",
+          "farm"
+        ],
+        "title": "ProductDetail",
+        "type": "object"
+      },
+      "ProductFarm": {
+        "properties": {
+          "coordinates": {
+            "$ref": "#/components/schemas/ProductFarmCoordinates"
+          },
+          "farmer": {
+            "title": "Farmer",
+            "type": "string"
+          },
+          "name": {
+            "title": "Name",
+            "type": "string"
+          }
+        },
+        "required": [
+          "name",
+          "coordinates",
+          "farmer"
+        ],
+        "title": "ProductFarm",
+        "type": "object"
+      },
+      "ProductFarmCoordinates": {
+        "properties": {
+          "lat": {
+            "title": "Lat",
+            "type": "number"
+          },
+          "lng": {
+            "title": "Lng",
+            "type": "number"
+          }
+        },
+        "required": [
+          "lat",
+          "lng"
+        ],
+        "title": "ProductFarmCoordinates",
+        "type": "object"
+      },
+      "ProductReview": {
+        "properties": {
+          "body": {
+            "title": "Body",
+            "type": "string"
+          },
+          "id": {
+            "title": "Id",
+            "type": "integer"
+          },
+          "rating": {
+            "title": "Rating",
+            "type": "integer"
+          },
+          "title": {
+            "title": "Title",
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "rating",
+          "title",
+          "body"
+        ],
+        "title": "ProductReview",
+        "type": "object"
+      },
+      "ProductReviewCreateResponse": {
+        "properties": {
+          "product_id": {
+            "title": "Product Id",
+            "type": "integer"
+          },
+          "review": {
+            "additionalProperties": true,
+            "title": "Review",
+            "type": "object"
+          },
+          "status": {
+            "title": "Status",
+            "type": "string"
+          }
+        },
+        "required": [
+          "status",
+          "product_id",
+          "review"
+        ],
+        "title": "ProductReviewCreateResponse",
         "type": "object"
       },
       "ProductWrite": {
@@ -241,6 +719,89 @@
         "title": "ProductWrite",
         "type": "object"
       },
+      "RecommendRequest": {
+        "properties": {
+          "messages": {
+            "anyOf": [
+              {
+                "items": {
+                  "$ref": "#/components/schemas/ChatMessage"
+                },
+                "type": "array"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Messages"
+          },
+          "preferences": {
+            "anyOf": [
+              {
+                "additionalProperties": true,
+                "type": "object"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Preferences"
+          },
+          "prompt": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Prompt"
+          }
+        },
+        "title": "RecommendRequest",
+        "type": "object"
+      },
+      "RecommendResponse": {
+        "properties": {
+          "input": {
+            "additionalProperties": true,
+            "title": "Input",
+            "type": "object"
+          },
+          "recommendations": {
+            "items": {
+              "$ref": "#/components/schemas/RecommendationItem"
+            },
+            "title": "Recommendations",
+            "type": "array"
+          }
+        },
+        "required": [
+          "recommendations",
+          "input"
+        ],
+        "title": "RecommendResponse",
+        "type": "object"
+      },
+      "RecommendationItem": {
+        "properties": {
+          "id": {
+            "title": "Id",
+            "type": "integer"
+          },
+          "name": {
+            "title": "Name",
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "name"
+        ],
+        "title": "RecommendationItem",
+        "type": "object"
+      },
       "RegisterRequest": {
         "properties": {
           "email": {
@@ -263,6 +824,50 @@
           "name"
         ],
         "title": "RegisterRequest",
+        "type": "object"
+      },
+      "SearchResponse": {
+        "properties": {
+          "query": {
+            "title": "Query",
+            "type": "string"
+          },
+          "results": {
+            "items": {
+              "$ref": "#/components/schemas/SearchResult"
+            },
+            "title": "Results",
+            "type": "array"
+          }
+        },
+        "required": [
+          "query",
+          "results"
+        ],
+        "title": "SearchResponse",
+        "type": "object"
+      },
+      "SearchResult": {
+        "properties": {
+          "id": {
+            "title": "Id",
+            "type": "integer"
+          },
+          "name": {
+            "title": "Name",
+            "type": "string"
+          },
+          "type": {
+            "title": "Type",
+            "type": "string"
+          }
+        },
+        "required": [
+          "type",
+          "id",
+          "name"
+        ],
+        "title": "SearchResult",
         "type": "object"
       },
       "StatusUpdate": {
@@ -1250,9 +1855,18 @@
           "content": {
             "application/json": {
               "schema": {
-                "additionalProperties": true,
-                "title": "Payload",
-                "type": "object"
+                "$ref": "#/components/schemas/ChatRequest",
+                "examples": [
+                  {
+                    "messages": [
+                      {
+                        "content": "Recommend a fruity pour-over coffee.",
+                        "role": "user"
+                      }
+                    ],
+                    "model": "brew-assistant-v1"
+                  }
+                ]
               }
             }
           },
@@ -1262,7 +1876,9 @@
           "200": {
             "content": {
               "application/json": {
-                "schema": {}
+                "schema": {
+                  "$ref": "#/components/schemas/ChatResponse"
+                }
               }
             },
             "description": "Successful Response"
@@ -1291,9 +1907,16 @@
           "content": {
             "application/json": {
               "schema": {
-                "additionalProperties": true,
-                "title": "Payload",
-                "type": "object"
+                "$ref": "#/components/schemas/RecommendRequest",
+                "examples": [
+                  {
+                    "preferences": {
+                      "method": "espresso",
+                      "roast": "dark"
+                    },
+                    "prompt": "I want chocolate-forward espresso beans"
+                  }
+                ]
               }
             }
           },
@@ -1303,7 +1926,9 @@
           "200": {
             "content": {
               "application/json": {
-                "schema": {}
+                "schema": {
+                  "$ref": "#/components/schemas/RecommendResponse"
+                }
               }
             },
             "description": "Successful Response"
@@ -1365,10 +1990,22 @@
           "200": {
             "content": {
               "application/json": {
-                "schema": {}
+                "schema": {
+                  "$ref": "#/components/schemas/AuthResponse"
+                }
               }
             },
             "description": "Successful Response"
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Invalid email or password."
           },
           "422": {
             "content": {
@@ -1381,7 +2018,7 @@
             "description": "Validation Error"
           }
         },
-        "summary": "Login Api",
+        "summary": "Authenticate with JSON payload",
         "tags": [
           "auth"
         ]
@@ -1427,10 +2064,22 @@
           "200": {
             "content": {
               "application/json": {
-                "schema": {}
+                "schema": {
+                  "$ref": "#/components/schemas/AuthResponse"
+                }
               }
             },
             "description": "Successful Response"
+          },
+          "409": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Email already exists."
           },
           "422": {
             "content": {
@@ -1443,7 +2092,7 @@
             "description": "Validation Error"
           }
         },
-        "summary": "Register Api",
+        "summary": "Register a user with JSON payload",
         "tags": [
           "auth"
         ]
@@ -1991,7 +2640,13 @@
           "200": {
             "content": {
               "application/json": {
-                "schema": {}
+                "schema": {
+                  "items": {
+                    "$ref": "#/components/schemas/Product"
+                  },
+                  "title": "Response Get Products Api V1 Products Get",
+                  "type": "array"
+                }
               }
             },
             "description": "Successful Response"
@@ -2007,7 +2662,7 @@
             "description": "Validation Error"
           }
         },
-        "summary": "Get Products",
+        "summary": "List products",
         "tags": [
           "products"
         ]
@@ -2036,7 +2691,18 @@
           "content": {
             "application/json": {
               "schema": {
-                "$ref": "#/components/schemas/ProductWrite"
+                "$ref": "#/components/schemas/ProductWrite",
+                "examples": [
+                  {
+                    "category": "beans",
+                    "description": "Blueberry and floral cup profile.",
+                    "name": "Ethiopia Guji Natural",
+                    "origin": "Ethiopia",
+                    "price": 22.5,
+                    "roast_level": "light",
+                    "slug": "ethiopia-guji-natural"
+                  }
+                ]
               }
             }
           },
@@ -2046,7 +2712,9 @@
           "200": {
             "content": {
               "application/json": {
-                "schema": {}
+                "schema": {
+                  "$ref": "#/components/schemas/Product"
+                }
               }
             },
             "description": "Successful Response"
@@ -2062,7 +2730,7 @@
             "description": "Validation Error"
           }
         },
-        "summary": "Create Product",
+        "summary": "Create product",
         "tags": [
           "products"
         ]
@@ -2102,7 +2770,9 @@
           "200": {
             "content": {
               "application/json": {
-                "schema": {}
+                "schema": {
+                  "$ref": "#/components/schemas/ProductDeleteResponse"
+                }
               }
             },
             "description": "Successful Response"
@@ -2118,7 +2788,7 @@
             "description": "Validation Error"
           }
         },
-        "summary": "Delete Product",
+        "summary": "Delete product",
         "tags": [
           "products"
         ]
@@ -2140,10 +2810,22 @@
           "200": {
             "content": {
               "application/json": {
-                "schema": {}
+                "schema": {
+                  "$ref": "#/components/schemas/ProductDetail"
+                }
               }
             },
             "description": "Successful Response"
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DetailErrorResponse"
+                }
+              }
+            },
+            "description": "Product not found."
           },
           "422": {
             "content": {
@@ -2156,7 +2838,7 @@
             "description": "Validation Error"
           }
         },
-        "summary": "Get Product Detail",
+        "summary": "Get product details",
         "tags": [
           "products"
         ]
@@ -2204,10 +2886,22 @@
           "200": {
             "content": {
               "application/json": {
-                "schema": {}
+                "schema": {
+                  "$ref": "#/components/schemas/Product"
+                }
               }
             },
             "description": "Successful Response"
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DetailErrorResponse"
+                }
+              }
+            },
+            "description": "Product not found."
           },
           "422": {
             "content": {
@@ -2220,7 +2914,7 @@
             "description": "Validation Error"
           }
         },
-        "summary": "Update Product",
+        "summary": "Update product",
         "tags": [
           "products"
         ]
@@ -2244,7 +2938,13 @@
           "200": {
             "content": {
               "application/json": {
-                "schema": {}
+                "schema": {
+                  "items": {
+                    "$ref": "#/components/schemas/ProductReview"
+                  },
+                  "title": "Response List Reviews Api V1 Products  Product Id  Reviews Get",
+                  "type": "array"
+                }
               }
             },
             "description": "Successful Response"
@@ -2260,7 +2960,7 @@
             "description": "Validation Error"
           }
         },
-        "summary": "List Reviews",
+        "summary": "List product reviews",
         "tags": [
           "products"
         ]
@@ -2294,7 +2994,9 @@
           "200": {
             "content": {
               "application/json": {
-                "schema": {}
+                "schema": {
+                  "$ref": "#/components/schemas/ProductReviewCreateResponse"
+                }
               }
             },
             "description": "Successful Response"
@@ -2310,7 +3012,7 @@
             "description": "Validation Error"
           }
         },
-        "summary": "Create Review",
+        "summary": "Create product review",
         "tags": [
           "products"
         ]
@@ -2321,11 +3023,16 @@
         "operationId": "search_api_v1_search_get",
         "parameters": [
           {
+            "description": "Free-text search query",
             "in": "query",
             "name": "q",
             "required": false,
             "schema": {
               "default": "",
+              "description": "Free-text search query",
+              "examples": [
+                "fruit-forward pour over"
+              ],
               "title": "Q",
               "type": "string"
             }
@@ -2335,7 +3042,9 @@
           "200": {
             "content": {
               "application/json": {
-                "schema": {}
+                "schema": {
+                  "$ref": "#/components/schemas/SearchResponse"
+                }
               }
             },
             "description": "Successful Response"
@@ -2351,7 +3060,7 @@
             "description": "Validation Error"
           }
         },
-        "summary": "Search",
+        "summary": "Search products by query",
         "tags": [
           "misc"
         ]
@@ -3104,9 +3813,12 @@
           "content": {
             "application/json": {
               "schema": {
-                "additionalProperties": true,
-                "title": "Payload",
-                "type": "object"
+                "$ref": "#/components/schemas/GraphQLRequest",
+                "examples": [
+                  {
+                    "query": "query { products { id name slug } }"
+                  }
+                ]
               }
             }
           },
@@ -3116,7 +3828,9 @@
           "200": {
             "content": {
               "application/json": {
-                "schema": {}
+                "schema": {
+                  "$ref": "#/components/schemas/GraphQLResponse"
+                }
               }
             },
             "description": "Successful Response"
@@ -3349,10 +4063,42 @@
           "200": {
             "content": {
               "application/json": {
-                "schema": {}
+                "schema": {
+                  "$ref": "#/components/schemas/AuthResponse"
+                }
               }
             },
             "description": "Successful Response"
+          },
+          "400": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Turnstile response missing."
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Invalid email or password."
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Turnstile verification failed."
           },
           "422": {
             "content": {
@@ -3365,7 +4111,7 @@
             "description": "Validation Error"
           }
         },
-        "summary": "Login Form",
+        "summary": "Authenticate with form payload",
         "tags": [
           "auth-forms"
         ]
@@ -3388,10 +4134,42 @@
           "200": {
             "content": {
               "application/json": {
-                "schema": {}
+                "schema": {
+                  "$ref": "#/components/schemas/AuthResponse"
+                }
               }
             },
             "description": "Successful Response"
+          },
+          "400": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Turnstile response missing."
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Turnstile verification failed."
+          },
+          "409": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Email already exists."
           },
           "422": {
             "content": {
@@ -3404,7 +4182,7 @@
             "description": "Validation Error"
           }
         },
-        "summary": "Register Form",
+        "summary": "Register with form payload",
         "tags": [
           "auth-forms"
         ]
