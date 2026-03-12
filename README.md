@@ -57,6 +57,8 @@ Validate that the committed spec matches the generated backend schema:
 .venv/bin/python scripts/export-openapi.py --check
 ```
 
+CI also enforces this with `backend/tests/test_openapi_artifact.py`.
+
 ## Build Plan
 
 - `docs/plans/build-single-origin-plan.md` — MVP-first implementation plan with VM-native learner runtime.
