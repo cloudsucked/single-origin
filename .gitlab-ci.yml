@@ -25,3 +25,13 @@ include:
       pythonVersion: "3.12"
       workDir: ./backend
       TEST_PATH: "tests"
+
+  - component: $CI_SERVER_FQDN/cloudflare/ci/python/test@~latest
+    inputs:
+      stage: test
+      jobPrefix: "backend-openapi"
+      runOnMR: true
+      runOnBranches: ^(main)$
+      pythonVersion: "3.12"
+      workDir: ./backend
+      TEST_PATH: "tests/test_openapi_artifact.py"

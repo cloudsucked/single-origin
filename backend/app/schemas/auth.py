@@ -12,6 +12,13 @@ class RegisterRequest(BaseModel):
     name: str
 
 
+class AuthUser(BaseModel):
+    id: int
+    email: EmailStr
+    name: str
+    role: str
+
+
 class AuthResponse(BaseModel):
     token: str
-    user: dict
+    user: AuthUser
