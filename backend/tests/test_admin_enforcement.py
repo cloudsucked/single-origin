@@ -1,4 +1,5 @@
 from pathlib import Path
+import os
 import sys
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
@@ -17,7 +18,10 @@ client = TestClient(app)
 def _admin_headers() -> dict:
     login = client.post(
         "/api/v1/auth/login",
-        json={"email": "admin@singleorigin.example", "password": "Admin2026!"},
+        json={
+            "email": os.environ["SEED_ADMIN_EMAIL"],
+            "password": os.environ["SEED_ADMIN_PASSWORD"],
+        },
     )
     token = login.json()["token"]
     return {"Authorization": f"Bearer {token}"}

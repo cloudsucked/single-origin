@@ -1,9 +1,14 @@
 from __future__ import annotations
 
+import logging
 import sqlite3
+from secrets import token_urlsafe
 from pathlib import Path
 
 from app.config import settings
+from app.services.passwords import hash_password, is_password_hash
+
+logger = logging.getLogger(__name__)
 
 
 def db_path() -> Path:
@@ -69,13 +74,36 @@ def init_db() -> None:
 
 
 def seed_db() -> None:
+    missing_seed_password_vars: list[str] = []
+    if not settings.seed_demo_password:
+        missing_seed_password_vars.append("SEED_DEMO_PASSWORD")
+    if not settings.seed_wholesale_password:
+        missing_seed_password_vars.append("SEED_WHOLESALE_PASSWORD")
+    if not settings.seed_admin_password:
+        missing_seed_password_vars.append("SEED_ADMIN_PASSWORD")
+    if not settings.seed_test_users_password:
+        missing_seed_password_vars.append("SEED_TEST_USERS_PASSWORD")
+    if missing_seed_password_vars:
+        logger.warning(
+            "Seed passwords not configured for %s. Random passwords will be generated and only password hashes are stored.",
+            ", ".join(missing_seed_password_vars),
+        )
+
+    demo_password = settings.seed_demo_password or token_urlsafe(24)
+    wholesale_password = settings.seed_wholesale_password or token_urlsafe(24)
+    admin_password = settings.seed_admin_password or token_urlsafe(24)
+    test_users_password = settings.seed_test_users_password or token_urlsafe(24)
+
     users = [
-        ("demo@singleorigin.example", "CoffeeIsLife2026!", "Alex Demo", "customer"),
-        ("wholesale@cafepartner.example", "Partner2026!", "Cafe Partner Co.", "wholesale_partner"),
-        ("admin@singleorigin.example", "Admin2026!", "Admin User", "admin"),
+        (settings.seed_demo_email, hash_password(demo_password), "Alex Demo", "customer"),
+        (settings.seed_wholesale_email, hash_password(wholesale_password), "Cafe Partner Co.", "wholesale_partner"),
+        (settings.seed_admin_email, hash_password(admin_password), "Admin User", "admin"),
     ]
     users.extend(
-        [(f"test{i}@example.com", "Test2026!", f"Test User {i}", "customer") for i in range(1, 51)]
+        [
+            (f"test{i}@example.com", hash_password(test_users_password), f"Test User {i}", "customer")
+            for i in range(1, 51)
+        ]
     )
 
     products = [
@@ -112,13 +140,30 @@ def seed_db() -> None:
             """
             INSERT OR IGNORE INTO orders
             (id, user_email, total, status, billing_address, card_last4, phone)
-            VALUES (1, 'demo@singleorigin.example', 59.5, 'DELIVERED', '123 Roast St, SF, CA 94107', '4242', '+1-555-0100')
-            """
+            VALUES (?, ?, ?, ?, ?, ?, ?)
+            """,
+            (1, settings.seed_demo_email, 59.5, "DELIVERED", "123 Roast St, SF, CA 94107", "4242", "+1-555-0100"),
         )
         conn.execute(
             """
             INSERT OR IGNORE INTO subscriptions
             (id, user_email, plan, frequency, status)
-            VALUES (1, 'demo@singleorigin.example', 'Explorer', 'Every 2 weeks', 'ACTIVE')
-            """
+            VALUES (?, ?, ?, ?, ?)
+            """,
+            (1, settings.seed_demo_email, "Explorer", "Every 2 weeks", "ACTIVE"),
         )
+
+    migrate_plaintext_passwords()
+
+
+def migrate_plaintext_passwords() -> None:
+    with get_conn() as conn:
+        rows = conn.execute("SELECT id, password FROM users").fetchall()
+        for row in rows:
+            current_password = row["password"]
+            if is_password_hash(current_password):
+                continue
+            conn.execute(
+                "UPDATE users SET password = ? WHERE id = ?",
+                (hash_password(current_password), row["id"]),
+            )

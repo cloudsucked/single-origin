@@ -13,7 +13,7 @@
   };
 
   let adminEmail = 'admin@singleorigin.example';
-  let adminPassword = 'Admin2026!';
+  let adminPassword = '';
   let adminToken = '';
   let loading = false;
   let error = '';
