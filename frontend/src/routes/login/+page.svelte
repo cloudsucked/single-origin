@@ -73,7 +73,7 @@
 
     <label>
       Password
-      <input type="password" name="password" autocomplete="current-password" required value="CoffeeIsLife2026!" />
+      <input type="password" name="password" autocomplete="current-password" required />
     </label>
 
     <div class="cf-turnstile" data-sitekey={turnstileSiteKey} data-action="login"></div>

@@ -100,8 +100,10 @@ CI also enforces this with `backend/tests/test_openapi_artifact.py`.
   - `TURNSTILE_SECRET_KEY`
   - `TURNSTILE_EXPECTED_HOSTNAME`
   - `ENFORCE_TURNSTILE` (`false` by default for learner exercises)
+  - Optional seeded login passwords: `SEED_DEMO_PASSWORD`, `SEED_WHOLESALE_PASSWORD`, `SEED_ADMIN_PASSWORD`, `SEED_TEST_USERS_PASSWORD`
 
 If `TURNSTILE_SECRET_KEY` is empty, Turnstile validation endpoints fail with a clear configuration error.
+If seed password variables are unset, random passwords are generated at startup and only password hashes are persisted.
 
 ## Reset and Recovery
 

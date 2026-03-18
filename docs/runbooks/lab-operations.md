@@ -39,6 +39,14 @@
 - `ENFORCE_TURNSTILE=true` enforces token checks for `/login`, `/register`, and `/contact/submit`.
 - Backend expects `TURNSTILE_SECRET_KEY` and optionally `TURNSTILE_EXPECTED_HOSTNAME`.
 
+## Seed Credential Logs
+
+- If any `SEED_*_PASSWORD` variable is unset, backend startup logs a warning similar to:
+
+```text
+Seed passwords not configured for SEED_DEMO_PASSWORD, SEED_WHOLESALE_PASSWORD, SEED_ADMIN_PASSWORD, SEED_TEST_USERS_PASSWORD. Random passwords will be generated and only password hashes are stored.
+```
+
 ## Verification Checklist
 
 - `GET /health` returns healthy.

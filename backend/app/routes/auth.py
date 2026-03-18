@@ -9,6 +9,7 @@ from jose import jwt
 from app.config import settings
 from app.schemas.auth import AuthResponse, LoginRequest, RegisterRequest
 from app.schemas.common import ErrorResponse
+from app.services.passwords import verify_password
 from app.services.repository import create_user, get_user_by_email
 from app.services.turnstile import verify_turnstile_token
 
@@ -48,7 +49,7 @@ def _to_user_dict(user: dict) -> dict:
 )
 async def login_api(payload: LoginRequest):
     user = get_user_by_email(payload.email)
-    if not user or user["password"] != payload.password:
+    if not user or not verify_password(payload.password, user["password"]):
         return JSONResponse({"error": "invalid_credentials"}, status_code=401)
     user_dict = _to_user_dict(user)
     return {"token": _issue_token(user_dict), "user": user_dict}
@@ -112,7 +113,7 @@ async def login_form(
             )
 
     user = get_user_by_email(email)
-    if not user or user["password"] != password:
+    if not user or not verify_password(password, user["password"]):
         return JSONResponse({"error": "invalid_credentials"}, status_code=401)
 
     user_dict = _to_user_dict(user)

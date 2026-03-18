@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 from app.db import get_conn
+from app.services.passwords import hash_password
 
 
 def get_user_by_email(email: str) -> dict | None:
@@ -13,10 +14,11 @@ def get_user_by_email(email: str) -> dict | None:
 
 
 def create_user(email: str, password: str, name: str, role: str = "customer") -> dict:
+    hashed_password = hash_password(password)
     with get_conn() as conn:
         conn.execute(
             "INSERT INTO users (email, password, name, role) VALUES (?, ?, ?, ?)",
-            (email, password, name, role),
+            (email, hashed_password, name, role),
         )
         row = conn.execute(
             "SELECT id, email, name, role FROM users WHERE email = ?",

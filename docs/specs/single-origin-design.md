@@ -744,12 +744,14 @@ Pre-seeded users for lab exercises:
 
 | Email | Password | Role | Name |
 |-------|----------|------|------|
-| `demo@singleorigin.example` | `CoffeeIsLife2026!` | customer | Alex Demo |
-| `wholesale@cafepartner.example` | `Partner2026!` | wholesale_partner | Cafe Partner Co. |
-| `admin@singleorigin.example` | `Admin2026!` | admin | Admin User |
-| `test1@example.com` through `test50@example.com` | `Test2026!` | customer | Test User 1-50 |
+| `demo@singleorigin.example` (default) | configured via `SEED_DEMO_PASSWORD` | customer | Alex Demo |
+| `wholesale@cafepartner.example` (default) | configured via `SEED_WHOLESALE_PASSWORD` | wholesale_partner | Cafe Partner Co. |
+| `admin@singleorigin.example` (default) | configured via `SEED_ADMIN_PASSWORD` | admin | Admin User |
+| `test1@example.com` through `test50@example.com` | configured via `SEED_TEST_USERS_PASSWORD` | customer | Test User 1-50 |
 
-The 50 test users are pre-seeded with varying order histories and subscription states to generate diverse traffic for API Shield's session-based analysis (BOLA detection needs 10,000+ sessions for reliable profiling — the traffic generator will simulate many more sessions using randomized JWTs).
+If these variables are unset, random passwords are generated at seed time and only password hashes are stored in the database.
+
+The 50 test users are pre-seeded with varying order histories and subscription states to generate diverse traffic for API Shield's session-based analysis (BOLA detection needs 10,000+ sessions for reliable profiling - the traffic generator will simulate many more sessions using randomized JWTs).
 
 ---
 
