@@ -1,5 +1,10 @@
 stages: [review, test]
 
+# Force a full clone on every run to prevent stale git cache causing
+# false OpenAPI artifact drift failures.
+variables:
+  GIT_STRATEGY: clone
+
 include:
   - component: $CI_SERVER_FQDN/cloudflare/ci/ai/opencode@~latest
     inputs:
