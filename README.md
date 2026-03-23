@@ -105,6 +105,20 @@ CI also enforces this with `backend/tests/test_openapi_artifact.py`.
 If `TURNSTILE_SECRET_KEY` is empty, Turnstile validation endpoints fail with a clear configuration error.
 If seed password variables are unset, random passwords are generated at startup and only password hashes are persisted.
 
+## Deploying changes to lab pods
+
+The CML `generic-origin` infrastructure template clones single-origin from the **GitHub mirror** at pod creation time. Merging to `main` on GitLab is not sufficient — you must also push to GitHub:
+
+```bash
+git push github main
+```
+
+New lab pods started after the push will pick up the latest code. Existing running pods are unaffected.
+
+Both remotes are configured in this repo:
+- `origin` — GitLab (source of truth, CI runs here)
+- `github` — GitHub (read by CML)
+
 ## Reset and Recovery
 
 - Reset lab data to baseline:
