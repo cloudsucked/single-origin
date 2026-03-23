@@ -1,5 +1,7 @@
 <script lang="ts">
+  import { goto } from '$app/navigation';
   import { apiBaseUrl, turnstileSiteKey } from '$lib/config';
+  import { setAuth } from '$lib/auth';
 
   let formEl: HTMLFormElement | null = null;
   let submitting = false;
@@ -7,9 +9,7 @@
   let success = '';
 
   async function submitRegister() {
-    if (!formEl) {
-      return;
-    }
+    if (!formEl) return;
 
     submitting = true;
     error = '';
@@ -34,16 +34,26 @@
       });
 
       const data = (await response.json()) as {
-        user?: { email?: string; name?: string };
+        token?: string;
+        user?: { id?: number; email?: string; name?: string; role?: string };
         detail?: string;
+        error?: string;
       };
 
       if (!response.ok) {
-        throw new Error(data.detail || 'Registration failed.');
+        throw new Error(data.detail || data.error || 'Registration failed.');
       }
 
-      success = `Account created for ${data.user?.name || data.user?.email || 'new user'}.`;
-      formEl.reset();
+      if (data.token && data.user) {
+        setAuth(data.token, {
+          id: data.user.id ?? 0,
+          email: data.user.email ?? '',
+          name: data.user.name ?? '',
+          role: data.user.role ?? 'customer'
+        });
+        success = `Account created for ${data.user.name || data.user.email}.`;
+        setTimeout(() => goto('/account'), 600);
+      }
     } catch (err) {
       error = err instanceof Error ? err.message : 'Registration failed.';
     } finally {
@@ -57,13 +67,13 @@
 </svelte:head>
 
 <section>
-  <h1>Register</h1>
+  <h1>Create account</h1>
   <nav class="section-nav" aria-label="Account navigation">
     <a href="/login">Sign in</a>
     <a href="/register" class="active-tab" aria-current="page">Create account</a>
     <a href="/account">Account overview</a>
   </nav>
-  <p>Create an account with Turnstile-backed abuse protection.</p>
+  <p>Join Single Origin to manage orders and subscriptions.</p>
 
   <form bind:this={formEl} on:submit|preventDefault={submitRegister}>
     <label>
@@ -78,7 +88,7 @@
 
     <label>
       Password
-      <input type="password" name="password" autocomplete="new-password" required />
+      <input type="password" name="password" autocomplete="new-password" required minlength="8" />
     </label>
 
     <div class="cf-turnstile" data-sitekey={turnstileSiteKey} data-action="register"></div>

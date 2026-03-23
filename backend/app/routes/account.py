@@ -1,17 +1,48 @@
 from __future__ import annotations
 
-from fastapi import APIRouter
+from fastapi import APIRouter, Request
+
+from app.config import settings
+from app.services.repository import get_user_by_email
 
 router = APIRouter(prefix="/api/v1/account", tags=["account"])
 
 _ADDRESSES = [{"id": 1, "street": "123 Roast St", "city": "SF", "postalCode": "94107"}]
 
 
+def _get_email_from_token(request: Request) -> str | None:
+    """Extract email from Bearer JWT without hard-failing."""
+    auth = request.headers.get("authorization", "")
+    if not auth.startswith("Bearer "):
+        return None
+    token = auth.removeprefix("Bearer ")
+    try:
+        from jose import jwt
+        claims = jwt.decode(
+            token,
+            settings.jwt_secret_key,
+            algorithms=[settings.jwt_algorithm],
+            audience="single-origin-api",
+        )
+        return claims.get("email")
+    except Exception:
+        return None
+
+
 @router.get("")
-async def get_account():
+async def get_account(request: Request):
+    email = _get_email_from_token(request) or settings.seed_demo_email
+    user = get_user_by_email(email)
+    if user:
+        return {
+            "name": user["name"],
+            "email": user["email"],
+            "phone": "+1-555-0100",
+            "payment_methods": [{"brand": "visa", "last4": "4242"}],
+        }
     return {
         "name": "Alex Demo",
-        "email": "demo@singleorigin.example",
+        "email": email,
         "phone": "+1-555-0100",
         "payment_methods": [{"brand": "visa", "last4": "4242"}],
     }

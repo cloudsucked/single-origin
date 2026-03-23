@@ -11,6 +11,8 @@ _CART: dict[str, list[dict]] = {"demo": []}
 class CartItemWrite(BaseModel):
     product_id: int
     quantity: int = 1
+    name: str = ""
+    price: float = 0.0
 
 
 @router.get("")

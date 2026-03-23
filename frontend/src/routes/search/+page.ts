@@ -7,7 +7,7 @@ export const load: PageLoad = async ({ fetch, url }) => {
     return { query: q, results: [] };
   }
   const encoded = encodeURIComponent(q);
-  const payload = await fetchApi<{ query: string; results: Array<{ type: string; id: number; name: string }> }>(
+  const payload = await fetchApi<{ query: string; results: Array<{ type: string; id: number; name: string; slug?: string }> }>(
     fetch,
     `/api/v1/search?q=${encoded}`
   );

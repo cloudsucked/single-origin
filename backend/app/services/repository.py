@@ -130,6 +130,61 @@ def set_subscription_status(subscription_id: int, status: str) -> bool:
     return cursor.rowcount > 0
 
 
+def get_user_by_id(user_id: int) -> dict | None:
+    with get_conn() as conn:
+        row = conn.execute(
+            "SELECT id, email, name, role FROM users WHERE id = ?",
+            (user_id,),
+        ).fetchone()
+    return dict(row) if row else None
+
+
+def update_user(user_id: int, email: str, name: str, role: str) -> bool:
+    with get_conn() as conn:
+        cursor = conn.execute(
+            "UPDATE users SET email = ?, name = ?, role = ? WHERE id = ?",
+            (email, name, role, user_id),
+        )
+    return cursor.rowcount > 0
+
+
+def delete_user(user_id: int) -> bool:
+    with get_conn() as conn:
+        cursor = conn.execute("DELETE FROM users WHERE id = ?", (user_id,))
+    return cursor.rowcount > 0
+
+
+def log_audit_event(
+    actor: str,
+    action: str,
+    target_type: str | None = None,
+    target_id: str | None = None,
+    severity: str = "info",
+) -> None:
+    with get_conn() as conn:
+        conn.execute(
+            """
+            INSERT INTO audit_logs (actor, action, target_type, target_id, severity)
+            VALUES (?, ?, ?, ?, ?)
+            """,
+            (actor, action, target_type, target_id, severity),
+        )
+
+
+def list_audit_logs(limit: int = 100) -> list[dict]:
+    with get_conn() as conn:
+        rows = conn.execute(
+            """
+            SELECT id, actor, action, target_type, target_id, severity, created_at
+            FROM audit_logs
+            ORDER BY id DESC
+            LIMIT ?
+            """,
+            (limit,),
+        ).fetchall()
+    return [dict(row) for row in rows]
+
+
 def admin_dashboard_metrics() -> dict:
     with get_conn() as conn:
         users = conn.execute("SELECT COUNT(*) AS count FROM users").fetchone()["count"]

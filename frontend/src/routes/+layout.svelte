@@ -1,5 +1,8 @@
 <script lang="ts">
   import { page } from '$app/stores';
+  import { onMount } from 'svelte';
+  import { cartCount, loadCart } from '$lib/cart';
+  import { authUser, isLoggedIn } from '$lib/auth';
 
   let mobileMenuOpen = false;
 
@@ -9,6 +12,8 @@
     }
     return $page.url.pathname.startsWith(path);
   };
+
+  onMount(() => loadCart());
 </script>
 
 <svelte:head>
@@ -151,6 +156,29 @@
     color: #fff;
     background: linear-gradient(140deg, var(--cf-orange) 0%, var(--cf-orange-deep) 100%);
     box-shadow: 0 8px 22px rgba(216, 95, 13, 0.26);
+  }
+
+  .cart-link {
+    position: relative;
+  }
+
+  .cart-badge {
+    position: absolute;
+    top: -4px;
+    right: -4px;
+    background: var(--cf-orange);
+    color: #fff;
+    border-radius: 999px;
+    font-size: 0.68rem;
+    font-weight: 800;
+    min-width: 18px;
+    height: 18px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    padding: 0 4px;
+    line-height: 1;
+    pointer-events: none;
   }
 
   .primary-nav {
@@ -413,8 +441,14 @@
 
       <nav class="utility-nav" aria-label="Utility">
         <a href="/search" class:active-nav={isActive('/search')}>Search</a>
-        <a href="/account" class:active-nav={isActive('/account')}>Account</a>
-        <a href="/checkout" class:active-nav={isActive('/checkout')}>Checkout</a>
+        {#if $isLoggedIn}
+          <a href="/account" class:active-nav={isActive('/account')}>{$authUser?.name?.split(' ')[0] ?? 'Account'}</a>
+        {:else}
+          <a href="/login" class:active-nav={isActive('/login')}>Sign in</a>
+        {/if}
+        <a href="/checkout" class:active-nav={isActive('/checkout')} class="cart-link">
+          Cart{#if $cartCount > 0}<span class="cart-badge">{$cartCount}</span>{/if}
+        </a>
       </nav>
 
       <button
@@ -443,7 +477,9 @@
         <nav class="mobile-drawer-nav" aria-label="Mobile shop">
           <a href="/shop" class:active-nav={isActive('/shop')} on:click={() => (mobileMenuOpen = false)}>Catalog</a>
           <a href="/subscribe" class:active-nav={isActive('/subscribe')} on:click={() => (mobileMenuOpen = false)}>Subscriptions</a>
-          <a href="/checkout" class:active-nav={isActive('/checkout')} on:click={() => (mobileMenuOpen = false)}>Checkout</a>
+          <a href="/checkout" class:active-nav={isActive('/checkout')} on:click={() => (mobileMenuOpen = false)} class="cart-link">
+            Cart{#if $cartCount > 0}<span class="cart-badge">{$cartCount}</span>{/if}
+          </a>
         </nav>
 
         <h3>Learn</h3>

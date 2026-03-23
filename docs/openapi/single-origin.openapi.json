@@ -160,6 +160,16 @@
       },
       "CartItemWrite": {
         "properties": {
+          "name": {
+            "default": "",
+            "title": "Name",
+            "type": "string"
+          },
+          "price": {
+            "default": 0.0,
+            "title": "Price",
+            "type": "number"
+          },
           "product_id": {
             "title": "Product Id",
             "type": "integer"
@@ -428,6 +438,73 @@
           "password"
         ],
         "title": "LoginRequest",
+        "type": "object"
+      },
+      "OrderItemWrite": {
+        "properties": {
+          "name": {
+            "default": "",
+            "title": "Name",
+            "type": "string"
+          },
+          "price": {
+            "default": 0.0,
+            "title": "Price",
+            "type": "number"
+          },
+          "product_id": {
+            "title": "Product Id",
+            "type": "integer"
+          },
+          "quantity": {
+            "title": "Quantity",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "product_id",
+          "quantity"
+        ],
+        "title": "OrderItemWrite",
+        "type": "object"
+      },
+      "PlaceOrderRequest": {
+        "properties": {
+          "billing_address": {
+            "default": "",
+            "title": "Billing Address",
+            "type": "string"
+          },
+          "card_last4": {
+            "default": "0000",
+            "title": "Card Last4",
+            "type": "string"
+          },
+          "email": {
+            "default": "demo@singleorigin.example",
+            "title": "Email",
+            "type": "string"
+          },
+          "items": {
+            "default": [],
+            "items": {
+              "$ref": "#/components/schemas/OrderItemWrite"
+            },
+            "title": "Items",
+            "type": "array"
+          },
+          "phone": {
+            "default": "",
+            "title": "Phone",
+            "type": "string"
+          },
+          "total": {
+            "default": 0.0,
+            "title": "Total",
+            "type": "number"
+          }
+        },
+        "title": "PlaceOrderRequest",
         "type": "object"
       },
       "Product": {
@@ -907,6 +984,59 @@
         "title": "TurnstileVerifyRequest",
         "type": "object"
       },
+      "UserCreate": {
+        "properties": {
+          "email": {
+            "format": "email",
+            "title": "Email",
+            "type": "string"
+          },
+          "name": {
+            "title": "Name",
+            "type": "string"
+          },
+          "password": {
+            "title": "Password",
+            "type": "string"
+          },
+          "role": {
+            "default": "customer",
+            "title": "Role",
+            "type": "string"
+          }
+        },
+        "required": [
+          "email",
+          "name",
+          "password"
+        ],
+        "title": "UserCreate",
+        "type": "object"
+      },
+      "UserUpdate": {
+        "properties": {
+          "email": {
+            "format": "email",
+            "title": "Email",
+            "type": "string"
+          },
+          "name": {
+            "title": "Name",
+            "type": "string"
+          },
+          "role": {
+            "title": "Role",
+            "type": "string"
+          }
+        },
+        "required": [
+          "email",
+          "name",
+          "role"
+        ],
+        "title": "UserUpdate",
+        "type": "object"
+      },
       "ValidationError": {
         "properties": {
           "loc": {
@@ -1300,7 +1430,7 @@
             "description": "Validation Error"
           }
         },
-        "summary": "Audit Logs",
+        "summary": "List audit log entries",
         "tags": [
           "admin"
         ]
@@ -1347,7 +1477,7 @@
             "description": "Validation Error"
           }
         },
-        "summary": "Dashboard",
+        "summary": "Admin dashboard metrics",
         "tags": [
           "admin"
         ]
@@ -1394,7 +1524,7 @@
             "description": "Validation Error"
           }
         },
-        "summary": "Orders",
+        "summary": "List all orders",
         "tags": [
           "admin"
         ]
@@ -1460,7 +1590,7 @@
             "description": "Validation Error"
           }
         },
-        "summary": "Order Status",
+        "summary": "Update order status",
         "tags": [
           "admin"
         ]
@@ -1507,7 +1637,7 @@
             "description": "Validation Error"
           }
         },
-        "summary": "Products",
+        "summary": "List all products",
         "tags": [
           "admin"
         ]
@@ -1562,7 +1692,7 @@
             "description": "Validation Error"
           }
         },
-        "summary": "Create Product",
+        "summary": "Create a product",
         "tags": [
           "admin"
         ]
@@ -1618,7 +1748,7 @@
             "description": "Validation Error"
           }
         },
-        "summary": "Delete Product",
+        "summary": "Delete a product",
         "tags": [
           "admin"
         ]
@@ -1682,7 +1812,7 @@
             "description": "Validation Error"
           }
         },
-        "summary": "Update Product",
+        "summary": "Update a product",
         "tags": [
           "admin"
         ]
@@ -1729,7 +1859,7 @@
             "description": "Validation Error"
           }
         },
-        "summary": "Subscriptions",
+        "summary": "List all subscriptions",
         "tags": [
           "admin"
         ]
@@ -1795,7 +1925,7 @@
             "description": "Validation Error"
           }
         },
-        "summary": "Subscription Status",
+        "summary": "Update subscription status",
         "tags": [
           "admin"
         ]
@@ -1842,7 +1972,182 @@
             "description": "Validation Error"
           }
         },
-        "summary": "Users",
+        "summary": "List all users",
+        "tags": [
+          "admin"
+        ]
+      },
+      "post": {
+        "operationId": "create_user_admin_api_v1_admin_users_post",
+        "parameters": [
+          {
+            "in": "header",
+            "name": "authorization",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Authorization"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UserCreate"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Create a user",
+        "tags": [
+          "admin"
+        ]
+      }
+    },
+    "/api/v1/admin/users/{user_id}": {
+      "delete": {
+        "operationId": "delete_user_admin_api_v1_admin_users__user_id__delete",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "user_id",
+            "required": true,
+            "schema": {
+              "title": "User Id",
+              "type": "integer"
+            }
+          },
+          {
+            "in": "header",
+            "name": "authorization",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Authorization"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Delete a user",
+        "tags": [
+          "admin"
+        ]
+      },
+      "put": {
+        "operationId": "update_user_admin_api_v1_admin_users__user_id__put",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "user_id",
+            "required": true,
+            "schema": {
+              "title": "User Id",
+              "type": "integer"
+            }
+          },
+          {
+            "in": "header",
+            "name": "authorization",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Authorization"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UserUpdate"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Update a user",
         "tags": [
           "admin"
         ]
@@ -2379,31 +2684,11 @@
       },
       "post": {
         "operationId": "place_order_api_v1_orders_post",
-        "parameters": [
-          {
-            "in": "header",
-            "name": "authorization",
-            "required": false,
-            "schema": {
-              "anyOf": [
-                {
-                  "type": "string"
-                },
-                {
-                  "type": "null"
-                }
-              ],
-              "title": "Authorization"
-            }
-          }
-        ],
         "requestBody": {
           "content": {
             "application/json": {
               "schema": {
-                "additionalProperties": true,
-                "title": "Payload",
-                "type": "object"
+                "$ref": "#/components/schemas/PlaceOrderRequest"
               }
             }
           },
