@@ -421,25 +421,6 @@
         "title": "HTTPValidationError",
         "type": "object"
       },
-      "LoginRequest": {
-        "properties": {
-          "email": {
-            "format": "email",
-            "title": "Email",
-            "type": "string"
-          },
-          "password": {
-            "title": "Password",
-            "type": "string"
-          }
-        },
-        "required": [
-          "email",
-          "password"
-        ],
-        "title": "LoginRequest",
-        "type": "object"
-      },
       "OrderItemWrite": {
         "properties": {
           "name": {
@@ -877,30 +858,6 @@
           "name"
         ],
         "title": "RecommendationItem",
-        "type": "object"
-      },
-      "RegisterRequest": {
-        "properties": {
-          "email": {
-            "format": "email",
-            "title": "Email",
-            "type": "string"
-          },
-          "name": {
-            "title": "Name",
-            "type": "string"
-          },
-          "password": {
-            "title": "Password",
-            "type": "string"
-          }
-        },
-        "required": [
-          "email",
-          "password",
-          "name"
-        ],
-        "title": "RegisterRequest",
         "type": "object"
       },
       "SearchResponse": {
@@ -2257,6 +2214,7 @@
     },
     "/api/v1/auth/.well-known/jwks.json": {
       "get": {
+        "description": "Return the JWKS for the active signing key.\n\nIn lab mode (LAB_JWT_PRIVATE_KEY set) this serves the RSA public key so\nCloudflare API Shield JWT Validation can verify lab tokens. In dev/prod mode\nwith HS256, JWKS is not applicable and an empty key set is returned.",
         "operationId": "jwks_api_v1_auth__well_known_jwks_json_get",
         "responses": {
           "200": {
@@ -2273,131 +2231,6 @@
           }
         },
         "summary": "Jwks",
-        "tags": [
-          "auth"
-        ]
-      }
-    },
-    "/api/v1/auth/login": {
-      "post": {
-        "operationId": "login_api_api_v1_auth_login_post",
-        "requestBody": {
-          "content": {
-            "application/json": {
-              "schema": {
-                "$ref": "#/components/schemas/LoginRequest"
-              }
-            }
-          },
-          "required": true
-        },
-        "responses": {
-          "200": {
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/AuthResponse"
-                }
-              }
-            },
-            "description": "Successful Response"
-          },
-          "401": {
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ErrorResponse"
-                }
-              }
-            },
-            "description": "Invalid email or password."
-          },
-          "422": {
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/HTTPValidationError"
-                }
-              }
-            },
-            "description": "Validation Error"
-          }
-        },
-        "summary": "Authenticate with JSON payload",
-        "tags": [
-          "auth"
-        ]
-      }
-    },
-    "/api/v1/auth/refresh": {
-      "post": {
-        "operationId": "refresh_token_api_v1_auth_refresh_post",
-        "responses": {
-          "200": {
-            "content": {
-              "application/json": {
-                "schema": {
-                  "additionalProperties": true,
-                  "title": "Response Refresh Token Api V1 Auth Refresh Post",
-                  "type": "object"
-                }
-              }
-            },
-            "description": "Successful Response"
-          }
-        },
-        "summary": "Refresh Token",
-        "tags": [
-          "auth"
-        ]
-      }
-    },
-    "/api/v1/auth/register": {
-      "post": {
-        "operationId": "register_api_api_v1_auth_register_post",
-        "requestBody": {
-          "content": {
-            "application/json": {
-              "schema": {
-                "$ref": "#/components/schemas/RegisterRequest"
-              }
-            }
-          },
-          "required": true
-        },
-        "responses": {
-          "200": {
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/AuthResponse"
-                }
-              }
-            },
-            "description": "Successful Response"
-          },
-          "409": {
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ErrorResponse"
-                }
-              }
-            },
-            "description": "Email already exists."
-          },
-          "422": {
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/HTTPValidationError"
-                }
-              }
-            },
-            "description": "Validation Error"
-          }
-        },
-        "summary": "Register a user with JSON payload",
         "tags": [
           "auth"
         ]
