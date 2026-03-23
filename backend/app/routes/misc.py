@@ -5,6 +5,7 @@ import json
 from fastapi import APIRouter, File, Query, Response as FastAPIResponse, UploadFile
 from fastapi.responses import PlainTextResponse, Response
 
+from app.db import get_conn
 from app.schemas.products import SearchResponse
 from app.services.complexity import COMPLEXITY_HEADER, score_search_query
 
@@ -21,7 +22,25 @@ async def search(
     q: str = Query(default="", description="Free-text search query", examples=["fruit-forward pour over"]),
 ):
     response.headers[COMPLEXITY_HEADER] = str(score_search_query(q))
-    return {"query": q, "results": [{"type": "product", "id": 1, "name": "Yirgacheffe Reserve"}]}
+    if not q:
+        return {"query": q, "results": []}
+    # Escape LIKE special characters so user input can't expand to wildcards
+    escaped = q.replace("\\", "\\\\").replace("%", "\\%").replace("_", "\\_")
+    pattern = f"%{escaped}%"
+    with get_conn() as conn:
+        rows = conn.execute(
+            """
+            SELECT id, name, slug FROM products
+            WHERE lower(name) LIKE lower(?) ESCAPE '\\'
+               OR lower(description) LIKE lower(?) ESCAPE '\\'
+               OR lower(origin) LIKE lower(?) ESCAPE '\\'
+            ORDER BY id ASC
+            LIMIT 20
+            """,
+            (pattern, pattern, pattern),
+        ).fetchall()
+    results = [{"type": "product", "id": row["id"], "name": row["name"], "slug": row["slug"]} for row in rows]
+    return {"query": q, "results": results}
 
 
 @router.post("/api/v1/upload")

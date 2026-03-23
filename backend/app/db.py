@@ -69,6 +69,16 @@ def init_db() -> None:
                 message TEXT NOT NULL,
                 created_at TEXT DEFAULT CURRENT_TIMESTAMP
             );
+
+            CREATE TABLE IF NOT EXISTS audit_logs (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                actor TEXT NOT NULL,
+                action TEXT NOT NULL,
+                target_type TEXT,
+                target_id TEXT,
+                severity TEXT NOT NULL DEFAULT 'info',
+                created_at TEXT DEFAULT CURRENT_TIMESTAMP
+            );
             """
         )
 

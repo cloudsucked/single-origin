@@ -11,6 +11,8 @@ _CART: dict[str, list[dict]] = {"demo": []}
 class CartItemWrite(BaseModel):
     product_id: int
     quantity: int = 1
+    name: str = ""
+    price: float = 0.0
 
 
 @router.get("")
@@ -38,3 +40,9 @@ async def remove_cart_item(item_id: int, session: str = "demo"):
     if 0 <= item_id < len(items):
         items.pop(item_id)
     return {"session": session, "items": items}
+
+
+@router.delete("")
+async def clear_cart(session: str = "demo"):
+    _CART[session] = []
+    return {"session": session, "items": []}
