@@ -101,9 +101,11 @@ CI also enforces this with `backend/tests/test_openapi_artifact.py`.
   - `TURNSTILE_EXPECTED_HOSTNAME`
   - `ENFORCE_TURNSTILE` (`false` by default for learner exercises)
   - Optional seeded login passwords: `SEED_DEMO_PASSWORD`, `SEED_WHOLESALE_PASSWORD`, `SEED_ADMIN_PASSWORD`, `SEED_TEST_USERS_PASSWORD`
+  - Optional lab JWT key: `LAB_JWT_PRIVATE_KEY` — when set, switches token signing from HS256 to RS256 using the provided RSA-2048 PEM key (with `\n` as literal escape sequences). The JWKS endpoint at `/api/v1/auth/.well-known/jwks.json` will serve the corresponding public key. Leave unset for local development (defaults to HS256).
 
 If `TURNSTILE_SECRET_KEY` is empty, Turnstile validation endpoints fail with a clear configuration error.
 If seed password variables are unset, random passwords are generated at startup and only password hashes are persisted.
+If `LAB_JWT_PRIVATE_KEY` is unset, the app uses HS256 with `JWT_SECRET_KEY` — behaviour is unchanged from the default.
 
 ## Deploying changes to lab pods
 
