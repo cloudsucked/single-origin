@@ -1,7 +1,7 @@
 <script lang="ts">
-  import { onMount } from 'svelte';
+  import { onMount, onDestroy } from 'svelte';
   import { apiBaseUrl } from '$lib/config';
-  import { cartItems, cartTotal, loadCart, removeFromCart, updateCartItem } from '$lib/cart';
+  import { cartItems, cartTotal, loadCart, removeFromCart, updateCartItem, clearCart } from '$lib/cart';
   import { authUser } from '$lib/auth';
 
   let loading = true;
@@ -23,18 +23,21 @@
   let cardExpiry = '';
   let cardCvc = '';
 
+  // Pre-fill billing form from auth store — cleaned up in onDestroy
+  const unsubAuth = authUser.subscribe((user) => {
+    if (user) {
+      email = user.email;
+      const parts = user.name.split(' ');
+      firstName = parts[0] ?? '';
+      lastName = parts.slice(1).join(' ');
+    }
+  });
+
+  onDestroy(unsubAuth);
+
   onMount(async () => {
     await loadCart();
     loading = false;
-    // Pre-fill if logged in
-    authUser.subscribe((user) => {
-      if (user) {
-        email = user.email;
-        const parts = user.name.split(' ');
-        firstName = parts[0] ?? '';
-        lastName = parts.slice(1).join(' ');
-      }
-    });
   });
 
   async function handleRemove(index: number) {
@@ -87,9 +90,7 @@
       orderSuccess = { id: data.order.id, total: data.order.total };
 
       // Clear cart after successful order
-      for (let i = $cartItems.length - 1; i >= 0; i--) {
-        await removeFromCart(0);
-      }
+      await clearCart();
     } catch (err) {
       orderError = err instanceof Error ? err.message : 'Order placement failed.';
     } finally {

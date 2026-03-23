@@ -2404,6 +2404,45 @@
       }
     },
     "/api/v1/cart": {
+      "delete": {
+        "operationId": "clear_cart_api_v1_cart_delete",
+        "parameters": [
+          {
+            "in": "query",
+            "name": "session",
+            "required": false,
+            "schema": {
+              "default": "demo",
+              "title": "Session",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Clear Cart",
+        "tags": [
+          "cart"
+        ]
+      },
       "get": {
         "operationId": "get_cart_api_v1_cart_get",
         "parameters": [

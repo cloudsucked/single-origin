@@ -1,6 +1,7 @@
 from __future__ import annotations
 
-from fastapi import APIRouter, Request
+from fastapi import APIRouter, HTTPException, Request
+from jose import JWTError, jwt
 
 from app.config import settings
 from app.services.repository import get_user_by_email
@@ -11,13 +12,12 @@ _ADDRESSES = [{"id": 1, "street": "123 Roast St", "city": "SF", "postalCode": "9
 
 
 def _get_email_from_token(request: Request) -> str | None:
-    """Extract email from Bearer JWT without hard-failing."""
+    """Return email from a valid Bearer JWT, None if no token present, or raise 401 if token is malformed/invalid."""
     auth = request.headers.get("authorization", "")
     if not auth.startswith("Bearer "):
         return None
     token = auth.removeprefix("Bearer ")
     try:
-        from jose import jwt
         claims = jwt.decode(
             token,
             settings.jwt_secret_key,
@@ -25,8 +25,8 @@ def _get_email_from_token(request: Request) -> str | None:
             audience="single-origin-api",
         )
         return claims.get("email")
-    except Exception:
-        return None
+    except JWTError as exc:
+        raise HTTPException(status_code=401, detail="invalid_token") from exc
 
 
 @router.get("")

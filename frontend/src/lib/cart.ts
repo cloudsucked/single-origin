@@ -1,4 +1,4 @@
-import { writable, derived, get } from 'svelte/store';
+import { writable, derived } from 'svelte/store';
 import { apiBaseUrl } from '$lib/config';
 import { browser } from '$app/environment';
 
@@ -88,11 +88,6 @@ export async function updateCartItem(
 
 export async function clearCart(session?: string): Promise<void> {
   const s = session ?? getCartSession();
-  const items = await fetch(`${apiBaseUrl}/api/v1/cart?session=${encodeURIComponent(s)}`)
-    .then((r) => r.json() as Promise<{ items: CartItem[] }>)
-    .then((d) => d.items ?? []);
-  for (let i = items.length - 1; i >= 0; i--) {
-    await fetch(`${apiBaseUrl}/api/v1/cart/items/${i}?session=${encodeURIComponent(s)}`, { method: 'DELETE' });
-  }
+  await fetch(`${apiBaseUrl}/api/v1/cart?session=${encodeURIComponent(s)}`, { method: 'DELETE' });
   cartItems.set([]);
 }

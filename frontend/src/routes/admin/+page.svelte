@@ -1,6 +1,7 @@
 <script lang="ts">
   import { onMount } from 'svelte';
   import { apiBaseUrl } from '$lib/config';
+  import { setAuth, clearAuth } from '$lib/auth';
 
   type Dashboard = {
     users: number;
@@ -85,12 +86,13 @@
   async function login() {
     loading = true; error = '';
     try {
-      const payload = await request<{ token: string }>('/api/v1/auth/login', {
+      const payload = await request<{ token: string; user: { id: number; email: string; name: string; role: string } }>('/api/v1/auth/login', {
         method: 'POST',
         body: JSON.stringify({ email: adminEmail, password: adminPassword })
       });
       adminToken = payload.token;
-      localStorage.setItem('single-origin-admin-token', adminToken);
+      // Store in shared auth store so the nav bar and other pages see the session
+      setAuth(payload.token, payload.user);
       await loadAdminData();
     } catch (err) {
       error = String(err);
@@ -104,7 +106,8 @@
     currentAdminSection = 'admin-login';
     dashboard = null; users = []; products = [];
     orders = []; subscriptions = []; auditLogs = [];
-    localStorage.removeItem('single-origin-admin-token');
+    // Clear shared auth store so nav bar and other pages also see the sign-out
+    clearAuth();
   }
 
   // ── Load all data ─────────────────────────────────────────────────────────
@@ -253,7 +256,7 @@
     syncSection();
     window.addEventListener('hashchange', syncSection);
 
-    const token = localStorage.getItem('single-origin-admin-token');
+    const token = localStorage.getItem('so_token');
     if (!token) {
       currentAdminSection = 'admin-login';
       return () => window.removeEventListener('hashchange', syncSection);

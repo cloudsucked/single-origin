@@ -24,15 +24,20 @@ async def search(
     response.headers[COMPLEXITY_HEADER] = str(score_search_query(q))
     if not q:
         return {"query": q, "results": []}
+    # Escape LIKE special characters so user input can't expand to wildcards
+    escaped = q.replace("\\", "\\\\").replace("%", "\\%").replace("_", "\\_")
+    pattern = f"%{escaped}%"
     with get_conn() as conn:
         rows = conn.execute(
             """
             SELECT id, name, slug FROM products
-            WHERE lower(name) LIKE lower(?) OR lower(description) LIKE lower(?) OR lower(origin) LIKE lower(?)
+            WHERE lower(name) LIKE lower(?) ESCAPE '\\'
+               OR lower(description) LIKE lower(?) ESCAPE '\\'
+               OR lower(origin) LIKE lower(?) ESCAPE '\\'
             ORDER BY id ASC
             LIMIT 20
             """,
-            (f"%{q}%", f"%{q}%", f"%{q}%"),
+            (pattern, pattern, pattern),
         ).fetchall()
     results = [{"type": "product", "id": row["id"], "name": row["name"], "slug": row["slug"]} for row in rows]
     return {"query": q, "results": results}

@@ -10,8 +10,9 @@
   let error = '';
   let success = '';
 
-  // Where to redirect after login
-  const redirectTo = $page.url.searchParams.get('redirect') || '/account';
+  // Where to redirect after login — restrict to relative paths to prevent open redirect
+  const raw = $page.url.searchParams.get('redirect') || '/account';
+  const redirectTo = raw.startsWith('/') ? raw : '/account';
 
   async function submitLogin() {
     if (!formEl) return;
