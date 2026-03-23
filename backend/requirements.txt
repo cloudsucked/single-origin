@@ -3,6 +3,6 @@ uvicorn==0.35.0
 httpx==0.28.1
 python-multipart==0.0.20
 python-jose==3.5.0
-cryptography>=43.0.0
+cryptography==43.0.3
 pydantic-settings==2.11.0
 email-validator==2.2.0
