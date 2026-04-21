@@ -545,10 +545,12 @@ Implemented in `app/routes/checkout.py`. Required form fields: `card_number`, `c
 
 For testing Traffic Detections' custom detection location feature (Enterprise), the app provides additional auth endpoints with non-standard patterns:
 
-| Method | Path | Description |
-|--------|------|-------------|
-| `POST` | `/api/v2/auth` | Alternative auth endpoint (different URL pattern) |
-| `POST` | `/api/mobile/login` | Mobile app auth endpoint |
+| Method | Path | Body | Description |
+|--------|------|------|-------------|
+| `POST` | `/api/v2/auth` | `application/json` — `{"username": "...", "password": "..."}` | Alternative auth endpoint; non-form, non-`/api/v1/auth` path. Implement Traffic Detections Task 4 Step 3b teaches `lookup_json_string(http.request.body.raw, "username")` against this endpoint. |
+| `POST` | `/api/mobile/login` | `application/json` — `{"email": "...", "password": "..."}` | Mobile-app-style auth. The field name is `email` (not `username`) deliberately so the lab shows how two custom detection locations on the same zone can read different JSON keys. |
+
+Both endpoints return `{"version": "v2"\|"mobile", "token": "<JWT>", "user": {...}}` on success (200) and `{"error": "invalid_credentials"}` on wrong password / unknown user (401). Missing fields return 400 `{"error":"missing_credentials"}`.
 
 ---
 

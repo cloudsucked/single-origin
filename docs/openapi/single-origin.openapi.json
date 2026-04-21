@@ -1251,6 +1251,7 @@
     },
     "/api/mobile/login": {
       "post": {
+        "description": "Alt-auth JSON login for Traffic Detections custom detection locations.\n\nBody shape: `{\"email\": \"...\", \"password\": \"...\"}`. Returns 200 + JWT\non success, 401 `{error: invalid_credentials}` on failure. Field name\nis `email` (not `username`) deliberately \u2014 Traffic Detections Task 4\nStep 3b configures two separate detection locations to show learners\nhow the `lookup_json_string` key differs between the two endpoints.",
         "operationId": "mobile_login_api_mobile_login_post",
         "requestBody": {
           "content": {
@@ -1284,7 +1285,7 @@
             "description": "Validation Error"
           }
         },
-        "summary": "Mobile Login",
+        "summary": "Alt-auth mobile: JSON {email, password}",
         "tags": [
           "misc"
         ]
@@ -4170,6 +4171,7 @@
     },
     "/api/v2/auth": {
       "post": {
+        "description": "Alt-auth JSON login for Traffic Detections custom detection locations.\n\nBody shape: `{\"username\": \"...\", \"password\": \"...\"}`. Returns 200 + JWT\non success, 401 `{error: invalid_credentials}` on failure. The endpoint\nis deliberately non-standard (v2 namespace, JSON rather than form) so\nTraffic Detections Task 4 can teach `lookup_json_string(...)` detection\nlocations against it.",
         "operationId": "auth_v2_api_v2_auth_post",
         "requestBody": {
           "content": {
@@ -4203,7 +4205,7 @@
             "description": "Validation Error"
           }
         },
-        "summary": "Auth V2",
+        "summary": "Alt-auth v2: JSON {username, password}",
         "tags": [
           "misc"
         ]

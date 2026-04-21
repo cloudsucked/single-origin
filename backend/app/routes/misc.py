@@ -9,6 +9,9 @@ from app.config import settings
 from app.db import get_conn
 from app.schemas.products import SearchResponse
 from app.services.complexity import COMPLEXITY_HEADER, score_search_query
+from app.services.jwt import issue_token
+from app.services.passwords import verify_password
+from app.services.repository import get_user_by_email
 
 router = APIRouter(tags=["misc"])
 
@@ -77,14 +80,65 @@ async def upload(file: UploadFile = File(...)):
     return {"filename": file.filename, "content_type": file.content_type, "size": len(payload)}
 
 
-@router.post("/api/v2/auth")
+def _alt_auth_user_dict(user: dict) -> dict:
+    return {
+        "id": user["id"],
+        "email": user["email"],
+        "name": user["name"],
+        "role": user["role"],
+    }
+
+
+@router.post(
+    "/api/v2/auth",
+    summary="Alt-auth v2: JSON {username, password}",
+)
 async def auth_v2(payload: dict):
-    return {"version": "v2", "status": "ok", "payload": payload}
+    """Alt-auth JSON login for Traffic Detections custom detection locations.
+
+    Body shape: `{"username": "...", "password": "..."}`. Returns 200 + JWT
+    on success, 401 `{error: invalid_credentials}` on failure. The endpoint
+    is deliberately non-standard (v2 namespace, JSON rather than form) so
+    Traffic Detections Task 4 can teach `lookup_json_string(...)` detection
+    locations against it.
+    """
+    from fastapi.responses import JSONResponse
+
+    username = payload.get("username") if isinstance(payload, dict) else None
+    password = payload.get("password") if isinstance(payload, dict) else None
+    if not username or not password:
+        return JSONResponse({"error": "missing_credentials"}, status_code=400)
+    user = get_user_by_email(username)
+    if not user or not verify_password(password, user["password"]):
+        return JSONResponse({"error": "invalid_credentials"}, status_code=401)
+    user_dict = _alt_auth_user_dict(user)
+    return {"version": "v2", "token": issue_token(user_dict), "user": user_dict}
 
 
-@router.post("/api/mobile/login")
+@router.post(
+    "/api/mobile/login",
+    summary="Alt-auth mobile: JSON {email, password}",
+)
 async def mobile_login(payload: dict):
-    return {"version": "mobile", "status": "ok", "payload": payload}
+    """Alt-auth JSON login for Traffic Detections custom detection locations.
+
+    Body shape: `{"email": "...", "password": "..."}`. Returns 200 + JWT
+    on success, 401 `{error: invalid_credentials}` on failure. Field name
+    is `email` (not `username`) deliberately — Traffic Detections Task 4
+    Step 3b configures two separate detection locations to show learners
+    how the `lookup_json_string` key differs between the two endpoints.
+    """
+    from fastapi.responses import JSONResponse
+
+    email = payload.get("email") if isinstance(payload, dict) else None
+    password = payload.get("password") if isinstance(payload, dict) else None
+    if not email or not password:
+        return JSONResponse({"error": "missing_credentials"}, status_code=400)
+    user = get_user_by_email(email)
+    if not user or not verify_password(password, user["password"]):
+        return JSONResponse({"error": "invalid_credentials"}, status_code=401)
+    user_dict = _alt_auth_user_dict(user)
+    return {"version": "mobile", "token": issue_token(user_dict), "user": user_dict}
 
 
 @router.post("/api/v1/track")

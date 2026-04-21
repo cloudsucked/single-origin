@@ -186,6 +186,75 @@ def test_admin_form_login_rejects_non_admin_user_with_403() -> None:
     assert response.json()["error"] == "not_admin"
 
 
+# ── Alt-auth JSON variants (Traffic Detections) ──────────────────────────
+
+
+def test_api_v2_auth_rejects_invalid_credentials() -> None:
+    response = client.post(
+        "/api/v2/auth",
+        json={"username": "nobody@example.com", "password": "wrong"},
+    )
+    assert response.status_code == 401
+
+
+def test_api_v2_auth_issues_token_on_valid_credentials() -> None:
+    from secrets import token_urlsafe
+
+    email = f"altauth-v2-{token_urlsafe(6)}@example.com"
+    password = token_urlsafe(20)
+    reg = client.post(
+        "/api/v1/auth/register",
+        json={"email": email, "password": password, "name": "Alt V2"},
+    )
+    assert reg.status_code == 200
+    response = client.post(
+        "/api/v2/auth",
+        json={"username": email, "password": password},
+    )
+    assert response.status_code == 200
+    body = response.json()
+    assert body["version"] == "v2"
+    assert "token" in body
+    assert body["user"]["email"] == email
+
+
+def test_api_mobile_login_rejects_invalid_credentials() -> None:
+    response = client.post(
+        "/api/mobile/login",
+        json={"email": "nobody@example.com", "password": "wrong"},
+    )
+    assert response.status_code == 401
+
+
+def test_api_mobile_login_uses_email_field_and_issues_token() -> None:
+    from secrets import token_urlsafe
+
+    email = f"altauth-mobile-{token_urlsafe(6)}@example.com"
+    password = token_urlsafe(20)
+    reg = client.post(
+        "/api/v1/auth/register",
+        json={"email": email, "password": password, "name": "Alt Mobile"},
+    )
+    assert reg.status_code == 200
+    response = client.post(
+        "/api/mobile/login",
+        json={"email": email, "password": password},
+    )
+    assert response.status_code == 200
+    body = response.json()
+    assert body["version"] == "mobile"
+    assert "token" in body
+
+
+def test_api_mobile_login_rejects_username_field() -> None:
+    """Field must be `email`; passing `username` should fail with 400."""
+    response = client.post(
+        "/api/mobile/login",
+        json={"username": "demo@singleorigin.example", "password": "anything"},
+    )
+    assert response.status_code == 400
+
+
 def test_register_api_sets_so_session_cookie() -> None:
     """Successful auth flows set the `so_session` fixture cookie.
 
