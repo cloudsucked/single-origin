@@ -58,6 +58,8 @@ The application should be accessible on multiple subdomains to support per-hostn
 
 All subdomains route to the same application; the hostname is used by Cloudflare for per-hostname policy enforcement.
 
+**Implementation note (ingress):** the CML `generic-origin` infrastructure template is responsible for provisioning all four hostnames. Both DNS records (orange-clouded `CNAME` entries in the lab zone) and the `cloudflared` ingress rules must include `www.`, `api.`, `wholesale.`, and `iot.`, all pointing at the single origin container on port 8080. The app itself performs no hostname-based routing — every path is reachable on every hostname, and the edge (WAF rules, mTLS enforcement) is the filter. See `docs/runbooks/vm-image-checklist.md` for the list that CML bake/validation checks.
+
 ---
 
 ## Product Catalog
