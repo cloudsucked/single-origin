@@ -94,6 +94,13 @@ async def track(payload: dict):
 @router.get("/js/so-analytics.js")
 async def so_analytics_js():
     body = """
+    (function () {
+      var existing = (document.cookie.match(/(?:^|; )_so_analytics=([^;]+)/) || [])[1];
+      if (!existing) {
+        var id = 'ana_' + Math.random().toString(36).slice(2) + '_' + Date.now().toString(36);
+        document.cookie = '_so_analytics=' + id + '; path=/; max-age=' + (60 * 60 * 24 * 30) + '; samesite=lax';
+      }
+    })();
     window.SOAnalytics = {
       track: function(name, data) {
         fetch('/api/v1/track', {method: 'POST', headers: {'Content-Type': 'application/json'}, body: JSON.stringify({name, data})});
@@ -123,6 +130,14 @@ async def chat_widget_js():
 @router.get("/js/social-pixel.js")
 async def social_pixel_js():
     body = """
+    (function () {
+      var existing = (document.cookie.match(/(?:^|; )_so_social=([^;]+)/) || [])[1];
+      if (!existing) {
+        var id = 'soc_' + Math.random().toString(36).slice(2);
+        // 1 year expiry typical of third-party social tracking pixels
+        document.cookie = '_so_social=' + id + '; path=/; max-age=' + (60 * 60 * 24 * 365) + '; samesite=lax';
+      }
+    })();
     fetch('https://social.singleorigin.example/pixel', {mode: 'no-cors'}).catch(() => {});
     """
     return Response(content=body, media_type="application/javascript")
@@ -131,7 +146,12 @@ async def social_pixel_js():
 @router.get("/js/cookie-consent.js")
 async def cookie_consent_js():
     body = """
-    document.cookie = 'so_consent=accepted; path=/';
+    (function () {
+      var existing = (document.cookie.match(/(?:^|; )so_consent=([^;]+)/) || [])[1];
+      if (!existing) {
+        document.cookie = 'so_consent=accepted; path=/; max-age=' + (60 * 60 * 24 * 365) + '; samesite=lax';
+      }
+    })();
     """
     return Response(content=body, media_type="application/javascript")
 
@@ -150,6 +170,51 @@ async def newsletter_js():
     setTimeout(() => {
       fetch('https://newsletter.singleorigin.example/popup', {mode: 'no-cors'}).catch(() => {});
     }, 5000);
+    """
+    return Response(content=body, media_type="application/javascript")
+
+
+@router.get("/js/cart.js")
+async def cart_js():
+    """Seed the `so_cart` first-party cookie for Page Shield Cookie Monitor.
+
+    Reads the SvelteKit-managed cart state from localStorage and mirrors it
+    into a base64-encoded cookie. Runs once per page load; no-op if the cookie
+    already matches the current cart. Purely lab-only observability surface —
+    the real cart state continues to live in localStorage and server-side.
+    """
+    body = """
+    (function () {
+      try {
+        var raw = localStorage.getItem('so:cart') || '[]';
+        var encoded = btoa(unescape(encodeURIComponent(raw)));
+        var existing = (document.cookie.match(/(?:^|; )so_cart=([^;]+)/) || [])[1];
+        if (existing !== encoded) {
+          document.cookie = 'so_cart=' + encoded + '; path=/; max-age=' + (60 * 60 * 24 * 30) + '; samesite=lax';
+        }
+      } catch (err) { /* swallow: lab fixture, not critical */ }
+    })();
+    """
+    return Response(content=body, media_type="application/javascript")
+
+
+@router.get("/js/prefs.js")
+async def prefs_js():
+    """Seed the `so_prefs` first-party cookie for Page Shield Cookie Monitor.
+
+    Stores the learner's display and roast-level preferences as a JSON string.
+    Default payload is written on first visit; subsequent visits leave the
+    cookie intact so Account Preferences page can continue to update it.
+    """
+    body = """
+    (function () {
+      var existing = (document.cookie.match(/(?:^|; )so_prefs=([^;]+)/) || [])[1];
+      if (!existing) {
+        var prefs = JSON.stringify({roast: 'medium', display: 'grid', currency: 'USD'});
+        var encoded = encodeURIComponent(prefs);
+        document.cookie = 'so_prefs=' + encoded + '; path=/; max-age=' + (60 * 60 * 24 * 365) + '; samesite=lax';
+      }
+    })();
     """
     return Response(content=body, media_type="application/javascript")
 

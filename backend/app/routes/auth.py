@@ -14,9 +14,33 @@ from app.services.turnstile import verify_turnstile_token
 router = APIRouter(prefix="/api/v1/auth", tags=["auth"])
 form_router = APIRouter(tags=["auth-forms"])
 
+# Session cookie lifetime for the so_session fixture cookie. Lab-only; the real
+# auth token is still returned in the JSON body so existing clients keep working.
+SESSION_COOKIE_MAX_AGE = 60 * 60 * 8  # 8 hours
+
 
 def _to_user_dict(user: dict) -> dict:
     return {"id": user["id"], "email": user["email"], "name": user["name"], "role": user["role"]}
+
+
+def _auth_response(token: str, user_dict: dict) -> JSONResponse:
+    """Return the auth JSON body and set the `so_session` fixture cookie.
+
+    The JWT stays in the JSON body so existing clients (and the SvelteKit
+    frontend) continue to work. The cookie is purely for Cloudflare Page Shield
+    Cookie Monitor observability — it is HTTP-only, SameSite=Lax, and set on
+    every successful login/register flow (API and form).
+    """
+    response = JSONResponse({"token": token, "user": user_dict})
+    response.set_cookie(
+        key="so_session",
+        value=token,
+        max_age=SESSION_COOKIE_MAX_AGE,
+        httponly=True,
+        samesite="lax",
+        path="/",
+    )
+    return response
 
 
 @router.post(
@@ -30,7 +54,7 @@ async def login_api(payload: LoginRequest):
     if not user or not verify_password(payload.password, user["password"]):
         return JSONResponse({"error": "invalid_credentials"}, status_code=401)
     user_dict = _to_user_dict(user)
-    return {"token": issue_token(user_dict), "user": user_dict}
+    return _auth_response(issue_token(user_dict), user_dict)
 
 
 @router.post(
@@ -43,7 +67,7 @@ async def register_api(payload: RegisterRequest):
     if get_user_by_email(payload.email):
         return JSONResponse({"error": "email_already_exists"}, status_code=409)
     user_dict = create_user(payload.email, payload.password, payload.name)
-    return {"token": issue_token(user_dict), "user": user_dict}
+    return _auth_response(issue_token(user_dict), user_dict)
 
 
 @router.post("/refresh")
@@ -92,7 +116,7 @@ async def login_form(
         return JSONResponse({"error": "invalid_credentials"}, status_code=401)
 
     user_dict = _to_user_dict(user)
-    return {"token": issue_token(user_dict), "user": user_dict}
+    return _auth_response(issue_token(user_dict), user_dict)
 
 
 @form_router.post(
@@ -131,4 +155,4 @@ async def register_form(
         return JSONResponse({"error": "email_already_exists"}, status_code=409)
 
     user_dict = create_user(email=email, password=password, name=name)
-    return {"token": issue_token(user_dict), "user": user_dict}
+    return _auth_response(issue_token(user_dict), user_dict)

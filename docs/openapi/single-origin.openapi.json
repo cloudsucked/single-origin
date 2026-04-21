@@ -4216,6 +4216,26 @@
         "summary": "Health"
       }
     },
+    "/js/cart.js": {
+      "get": {
+        "description": "Seed the `so_cart` first-party cookie for Page Shield Cookie Monitor.\n\nReads the SvelteKit-managed cart state from localStorage and mirrors it\ninto a base64-encoded cookie. Runs once per page load; no-op if the cookie\nalready matches the current cart. Purely lab-only observability surface \u2014\nthe real cart state continues to live in localStorage and server-side.",
+        "operationId": "cart_js_js_cart_js_get",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            },
+            "description": "Successful Response"
+          }
+        },
+        "summary": "Cart Js",
+        "tags": [
+          "misc"
+        ]
+      }
+    },
     "/js/chat-widget.js": {
       "get": {
         "operationId": "chat_widget_js_js_chat_widget_js_get",
@@ -4309,6 +4329,26 @@
           }
         },
         "summary": "Newsletter Js",
+        "tags": [
+          "misc"
+        ]
+      }
+    },
+    "/js/prefs.js": {
+      "get": {
+        "description": "Seed the `so_prefs` first-party cookie for Page Shield Cookie Monitor.\n\nStores the learner's display and roast-level preferences as a JSON string.\nDefault payload is written on first visit; subsequent visits leave the\ncookie intact so Account Preferences page can continue to update it.",
+        "operationId": "prefs_js_js_prefs_js_get",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            },
+            "description": "Successful Response"
+          }
+        },
+        "summary": "Prefs Js",
         "tags": [
           "misc"
         ]

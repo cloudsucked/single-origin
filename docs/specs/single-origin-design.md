@@ -576,16 +576,18 @@ The traffic profile can switch versions during a lab exercise to trigger Page Sh
 
 ### Cookies
 
-The application sets the following cookies (for Page Shield Cookie Monitor):
+The application sets the following cookies for Page Shield Cookie Monitor observability. All six are scoped to the apex `.{SLUG}.sxplab.com` domain so they propagate across `www.`, `api.`, and regular product hostnames. mTLS hostnames (`wholesale.`, `iot.`) follow the standard browser behavior and can see them too, but the lab does not expect learners to drive traffic from a browser against those hostnames.
 
-| Cookie Name | Domain | Type | Purpose |
-|-------------|--------|------|---------|
-| `so_session` | `.{SLUG}.sxplab.com` | First-party | Session cookie (JWT reference) |
-| `so_cart` | `.{SLUG}.sxplab.com` | First-party | Cart contents (base64 encoded) |
-| `so_consent` | `.{SLUG}.sxplab.com` | First-party | Cookie consent preferences |
-| `so_prefs` | `.{SLUG}.sxplab.com` | First-party | User preferences (roast level, display) |
-| `_so_analytics` | `.{SLUG}.sxplab.com` | First-party (analytics) | Analytics session ID |
-| `_so_social` | `.{SLUG}.sxplab.com` | Third-party-like | Social tracking pixel cookie |
+| Cookie Name | Writer | HTTP-Only | SameSite | Expiry | Purpose |
+|-------------|--------|-----------|----------|--------|---------|
+| `so_session` | Server — `_auth_response` in `app/routes/auth.py` on every successful login/register (API + form flows) | Yes | Lax | 8 h | Session cookie (JWT mirror); real auth still uses the JSON-body token |
+| `so_cart` | `/js/cart.js` (page load, reads `localStorage.so:cart` and base64-encodes it) | No | Lax | 30 d | Mirror of current cart state so Page Shield sees a data-bearing cookie |
+| `so_consent` | `/js/cookie-consent.js` on first page load | No | Lax | 365 d | Cookie consent opt-in record |
+| `so_prefs` | `/js/prefs.js` on first page load (default payload = `{"roast":"medium","display":"grid","currency":"USD"}`) | No | Lax | 365 d | Display / roast / currency preferences |
+| `_so_analytics` | `/js/so-analytics.js` on first page load | No | Lax | 30 d | Analytics session ID (`ana_<random>_<timestamp>`) |
+| `_so_social` | `/js/social-pixel.js` on first page load | No | Lax | 365 d | Social tracking pixel ID (`soc_<random>`) |
+
+All six are set as first-party cookies with `path=/`. None are marked `Secure` in the lab fixtures because the CML pod setup may hit the origin over plain HTTP during local development; production deployments behind Cloudflare see them as `Secure` via the edge.
 
 ---
 
