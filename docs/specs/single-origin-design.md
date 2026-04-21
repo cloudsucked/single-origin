@@ -570,9 +570,15 @@ The `/js/checkout-sdk.js` script supports a version parameter: `/js/checkout-sdk
 | Version | Behavior |
 |---------|----------|
 | `v=1.2.3` (default) | Normal payment form initialization |
-| `v=1.2.4` | Same functionality + additional `fetch()` to `exfil.singleorigin.example` — simulates a skimmer |
+| `v=1.2.4` | Same functionality + additional `fetch()` to the configured exfil target (see below) — simulates a skimmer |
 
 The traffic profile can switch versions during a lab exercise to trigger Page Shield's code change detection alert.
+
+**Exfil target (compromised variant only):** the exfil URL the `v=1.2.4` variant fetches is configurable via the `CHECKOUT_SDK_EXFIL_URL` env var.
+
+- Default: `https://exfil.{SLUG}.sxplab.com/skim`. The literal `{SLUG}` placeholder is served verbatim in the JS so that lab deployments which have not overridden the env var still emit an observably distinct outbound request (Page Shield Connection Monitor records a new connection target even if DNS resolution fails).
+- Lab deployments that want a resolvable exfil host (so Cloudflare sees a successful connection rather than a DNS failure) should set `CHECKOUT_SDK_EXFIL_URL=https://exfil.<pod-slug>.sxplab.com/skim` in the pod environment and add the matching DNS record in the lab zone.
+- The host portion should always be under a domain the lab team controls — this is a simulated skimmer, not a real exfil target.
 
 ### Cookies
 

@@ -29,6 +29,15 @@ class Settings(BaseSettings):
     seed_admin_password: str = ""
     seed_test_users_password: str = ""
 
+    # Page Shield checkout-sdk compromised-variant exfil target. The app serves
+    # two variants from `/js/checkout-sdk.js`: `v=1.2.3` (safe) and `v=1.2.4`
+    # (compromised, exfils cart to this URL). Default is a lab-zone subdomain
+    # so DNS resolves and Cloudflare can log the outbound connection; override
+    # via CHECKOUT_SDK_EXFIL_URL in CML pod env to point at a different host.
+    # Use the literal `{SLUG}` placeholder in the default to force an explicit
+    # choice in every pod (no accidental shared default).
+    checkout_sdk_exfil_url: str = "https://exfil.{SLUG}.sxplab.com/skim"
+
     model_config = SettingsConfigDict(env_file=".env", env_file_encoding="utf-8")
 
 

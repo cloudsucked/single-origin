@@ -4257,6 +4257,7 @@
     },
     "/js/checkout-sdk.js": {
       "get": {
+        "description": "Serve the safe (`v=1.2.3`) or compromised (`v=1.2.4`) checkout SDK.\n\nPage Shield Task 9 simulates a supply-chain attack by flipping the\ntraffic-profile to request `v=1.2.4`, which includes an outbound fetch\nto the exfil URL configured via the `CHECKOUT_SDK_EXFIL_URL` env var\n(defaults to `https://exfil.{SLUG}.sxplab.com/skim` \u2014 the `{SLUG}`\nplaceholder stays literal in the served JS so lab deployments that\ndo not override the env var still produce an observably distinct\noutbound connection).",
         "operationId": "checkout_sdk_js_checkout_sdk_js_get",
         "parameters": [
           {

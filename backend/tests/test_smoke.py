@@ -89,6 +89,26 @@ def test_cookie_consent_script_sets_consent_cookie() -> None:
     assert "so_consent=accepted" in response.text
 
 
+def test_checkout_sdk_safe_variant_has_no_exfil() -> None:
+    """The default `v=1.2.3` variant must not fetch the exfil target."""
+    response = client.get("/js/checkout-sdk.js")
+    assert response.status_code == 200
+    assert "exfil" not in response.text.lower()
+    assert "payments.singleorigin.example" in response.text
+
+
+def test_checkout_sdk_compromised_variant_includes_configured_exfil_url() -> None:
+    """The `v=1.2.4` variant fetches the URL from `CHECKOUT_SDK_EXFIL_URL`."""
+    from app.config import settings
+
+    response = client.get("/js/checkout-sdk.js?v=1.2.4")
+    assert response.status_code == 200
+    # Exfil URL from settings is baked into the served JS
+    assert settings.checkout_sdk_exfil_url in response.text
+    # Safe-path fetch still present
+    assert "payments.singleorigin.example" in response.text
+
+
 def test_register_api_sets_so_session_cookie() -> None:
     """Successful auth flows set the `so_session` fixture cookie.
 
