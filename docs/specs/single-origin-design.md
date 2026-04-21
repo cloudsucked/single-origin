@@ -601,6 +601,8 @@ The application loads simulated third-party JavaScript files that Page Shield's 
 | `/js/chat-widget.js` | Live chat service (like Intercom) | Homepage, Contact, Product pages | Renders chat bubble, connects to `chat.singleorigin.example` |
 | `/js/social-pixel.js` | Social media tracking pixel (like Facebook Pixel) | Homepage, Product pages | Sends tracking events to `social.singleorigin.example` |
 | `/js/cookie-consent.js` | Cookie consent manager (like CookieBot) | All pages | Renders consent banner, sets `so_consent` cookie |
+| `/js/cart.js` | First-party cart persistence helper | All pages | Mirrors `localStorage.so:cart` into the `so_cart` cookie (Page Shield Cookie Monitor fixture) |
+| `/js/prefs.js` | First-party preferences helper | All pages | Seeds the `so_prefs` cookie with default `{roast, display, currency}` (Page Shield Cookie Monitor fixture) |
 | `/js/recommendations.js` | Product recommendation engine | Product detail, Checkout | Fetches recommendations from `recs.singleorigin.example` |
 | `/js/newsletter-popup.js` | Email marketing popup (like Klaviyo) | Homepage (after 5s delay) | Shows newsletter signup modal |
 
@@ -937,6 +939,7 @@ When a task depends on one of the CANNOT items:
 | AI endpoints | 2 |
 | GraphQL | 1 |
 | Additional auth endpoints | 2 |
-| Meta endpoints | 5 |
-| Third-party scripts | 8 |
-| **Total** | **~81** |
+| Form handlers (`/admin`, `/checkout/submit`) | 2 |
+| Meta endpoints | 6 |
+| Third-party / first-party scripts | 10 |
+| **Total** | **~85** |
