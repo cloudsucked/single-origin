@@ -8,7 +8,7 @@ from app.schemas.auth import AuthResponse, LoginRequest, RegisterRequest
 from app.schemas.common import ErrorResponse
 from app.services.jwt import build_jwks, issue_token
 from app.services.passwords import verify_password
-from app.services.repository import create_user, get_user_by_email
+from app.services.repository import create_user, get_user_by_email, public_user_dict
 from app.services.turnstile import verify_turnstile_token
 
 router = APIRouter(prefix="/api/v1/auth", tags=["auth"])
@@ -19,17 +19,13 @@ form_router = APIRouter(tags=["auth-forms"])
 SESSION_COOKIE_MAX_AGE = 60 * 60 * 8  # 8 hours
 
 
-def _to_user_dict(user: dict) -> dict:
-    return {"id": user["id"], "email": user["email"], "name": user["name"], "role": user["role"]}
-
-
 def _auth_response(token: str, user_dict: dict) -> JSONResponse:
     """Return the auth JSON body and set the `so_session` fixture cookie.
 
     The JWT stays in the JSON body so existing clients (and the SvelteKit
     frontend) continue to work. The cookie is purely for Cloudflare Page Shield
-    Cookie Monitor observability — it is HTTP-only, SameSite=Lax, and set on
-    every successful login/register flow (API and form).
+    Cookie Monitor observability — it is HTTP-only, SameSite=Lax, Secure, and
+    set on every successful login/register flow (API and form).
     """
     response = JSONResponse({"token": token, "user": user_dict})
     response.set_cookie(
@@ -37,6 +33,7 @@ def _auth_response(token: str, user_dict: dict) -> JSONResponse:
         value=token,
         max_age=SESSION_COOKIE_MAX_AGE,
         httponly=True,
+        secure=True,
         samesite="lax",
         path="/",
     )
@@ -53,7 +50,7 @@ async def login_api(payload: LoginRequest):
     user = get_user_by_email(payload.email)
     if not user or not verify_password(payload.password, user["password"]):
         return JSONResponse({"error": "invalid_credentials"}, status_code=401)
-    user_dict = _to_user_dict(user)
+    user_dict = public_user_dict(user)
     return _auth_response(issue_token(user_dict), user_dict)
 
 
@@ -115,7 +112,7 @@ async def login_form(
     if not user or not verify_password(password, user["password"]):
         return JSONResponse({"error": "invalid_credentials"}, status_code=401)
 
-    user_dict = _to_user_dict(user)
+    user_dict = public_user_dict(user)
     return _auth_response(issue_token(user_dict), user_dict)
 
 
@@ -152,7 +149,7 @@ async def admin_form_login(
         return JSONResponse({"error": "invalid_credentials"}, status_code=401)
     if user.get("role") != "admin":
         return JSONResponse({"error": "not_admin"}, status_code=403)
-    user_dict = _to_user_dict(user)
+    user_dict = public_user_dict(user)
     return _auth_response(issue_token(user_dict), user_dict)
 
 
