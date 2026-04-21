@@ -4232,7 +4232,11 @@
           "200": {
             "content": {
               "application/json": {
-                "schema": {}
+                "schema": {
+                  "additionalProperties": true,
+                  "title": "Response Debug Headers Debug Headers Get",
+                  "type": "object"
+                }
               }
             },
             "description": "Successful Response"

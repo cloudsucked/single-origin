@@ -3,7 +3,7 @@ from __future__ import annotations
 import json
 
 from fastapi import APIRouter, File, Query, Request, Response as FastAPIResponse, UploadFile
-from fastapi.responses import PlainTextResponse, Response
+from fastapi.responses import JSONResponse, PlainTextResponse, Response
 
 from app.config import settings
 from app.db import get_conn
@@ -11,7 +11,7 @@ from app.schemas.products import SearchResponse
 from app.services.complexity import COMPLEXITY_HEADER, score_search_query
 from app.services.jwt import issue_token
 from app.services.passwords import verify_password
-from app.services.repository import get_user_by_email
+from app.services.repository import get_user_by_email, public_user_dict
 
 router = APIRouter(tags=["misc"])
 
@@ -20,7 +20,7 @@ router = APIRouter(tags=["misc"])
     "/debug/headers",
     summary="Echo incoming request headers for mTLS managed-transform validation",
 )
-async def debug_headers(request: Request):
+async def debug_headers(request: Request) -> dict[str, object]:
     """Return the full set of headers the origin received, unmodified.
 
     Used by Implement mTLS Task 8 to verify that Cloudflare's Managed Transform
@@ -80,20 +80,12 @@ async def upload(file: UploadFile = File(...)):
     return {"filename": file.filename, "content_type": file.content_type, "size": len(payload)}
 
 
-def _alt_auth_user_dict(user: dict) -> dict:
-    return {
-        "id": user["id"],
-        "email": user["email"],
-        "name": user["name"],
-        "role": user["role"],
-    }
-
-
 @router.post(
     "/api/v2/auth",
+    response_model=None,
     summary="Alt-auth v2: JSON {username, password}",
 )
-async def auth_v2(payload: dict):
+async def auth_v2(payload: dict) -> dict[str, object] | JSONResponse:
     """Alt-auth JSON login for Traffic Detections custom detection locations.
 
     Body shape: `{"username": "...", "password": "..."}`. Returns 200 + JWT
@@ -102,8 +94,6 @@ async def auth_v2(payload: dict):
     Traffic Detections Task 4 can teach `lookup_json_string(...)` detection
     locations against it.
     """
-    from fastapi.responses import JSONResponse
-
     username = payload.get("username") if isinstance(payload, dict) else None
     password = payload.get("password") if isinstance(payload, dict) else None
     if not username or not password:
@@ -111,15 +101,16 @@ async def auth_v2(payload: dict):
     user = get_user_by_email(username)
     if not user or not verify_password(password, user["password"]):
         return JSONResponse({"error": "invalid_credentials"}, status_code=401)
-    user_dict = _alt_auth_user_dict(user)
+    user_dict = public_user_dict(user)
     return {"version": "v2", "token": issue_token(user_dict), "user": user_dict}
 
 
 @router.post(
     "/api/mobile/login",
+    response_model=None,
     summary="Alt-auth mobile: JSON {email, password}",
 )
-async def mobile_login(payload: dict):
+async def mobile_login(payload: dict) -> dict[str, object] | JSONResponse:
     """Alt-auth JSON login for Traffic Detections custom detection locations.
 
     Body shape: `{"email": "...", "password": "..."}`. Returns 200 + JWT
@@ -128,8 +119,6 @@ async def mobile_login(payload: dict):
     Step 3b configures two separate detection locations to show learners
     how the `lookup_json_string` key differs between the two endpoints.
     """
-    from fastapi.responses import JSONResponse
-
     email = payload.get("email") if isinstance(payload, dict) else None
     password = payload.get("password") if isinstance(payload, dict) else None
     if not email or not password:
@@ -137,7 +126,7 @@ async def mobile_login(payload: dict):
     user = get_user_by_email(email)
     if not user or not verify_password(password, user["password"]):
         return JSONResponse({"error": "invalid_credentials"}, status_code=401)
-    user_dict = _alt_auth_user_dict(user)
+    user_dict = public_user_dict(user)
     return {"version": "mobile", "token": issue_token(user_dict), "user": user_dict}
 
 

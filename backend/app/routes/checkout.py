@@ -13,6 +13,7 @@ form_router = APIRouter(tags=["checkout-forms"])
 
 @form_router.post(
     "/checkout/submit",
+    response_model=None,  # Return type is JSONResponse | RedirectResponse — hand-serialized, not a Pydantic model
     summary="Submit a checkout form payload (legacy HTML form path)",
 )
 async def checkout_submit(
@@ -29,7 +30,7 @@ async def checkout_submit(
     email: str = Form("demo@singleorigin.example"),
     total: float = Form(0.0),
     cf_turnstile_response: str | None = Form(None, alias="cf-turnstile-response"),
-):
+) -> JSONResponse | RedirectResponse:
     """Form-encoded checkout submission.
 
     Lab surface for API Shield schema validation, Turnstile pre-clearance,

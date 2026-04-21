@@ -1,6 +1,7 @@
 from __future__ import annotations
 
-from typing import Annotated, Optional
+import json
+from typing import Annotated
 
 import strawberry
 from fastapi import APIRouter, Request
@@ -74,10 +75,14 @@ class Product:
 
     _origin_country: strawberry.Private[str]
 
-    @strawberry.field
-    def farm(self) -> Farm:
-        # Synthetic farm tied to the product's origin field so learners can
-        # drill through `product { farm { origin { farm { ... } } } }`.
+    def _make_farm(self) -> Farm:
+        """Build the synthetic Farm attached to this product.
+
+        Shared by the `farm` and `origin` resolvers so `origin` does not
+        call `self.farm()` (a `@strawberry.field`-decorated method, which
+        bypasses resolver machinery and is fragile across Strawberry
+        upgrades).
+        """
         return Farm(
             name=f"{self._origin_country} Reserve Estate",
             country=self._origin_country,
@@ -90,8 +95,14 @@ class Product:
         )
 
     @strawberry.field
+    def farm(self) -> Farm:
+        # Synthetic farm tied to the product's origin field so learners can
+        # drill through `product { farm { origin { farm { ... } } } }`.
+        return self._make_farm()
+
+    @strawberry.field
     def origin(self) -> Origin:
-        farm = self.farm()
+        farm = self._make_farm()
         return Origin(country=farm.country, region=farm.region, farm=farm)
 
     @strawberry.field
@@ -217,7 +228,7 @@ def _user_from_row(row: dict) -> User:
 @strawberry.type
 class Query:
     @strawberry.field
-    def product(self, id: strawberry.ID) -> Optional[Product]:
+    def product(self, id: strawberry.ID) -> Product | None:
         try:
             row = get_product(int(id))
         except (TypeError, ValueError):
@@ -227,9 +238,9 @@ class Query:
     @strawberry.field
     def products(
         self,
-        origin: Optional[str] = None,
-        roast: Optional[str] = None,
-        category: Optional[str] = None,
+        origin: str | None = None,
+        roast: str | None = None,
+        category: str | None = None,
         page: Annotated[int, strawberry.argument(description="1-based page")] = 1,
         limit: int = 20,
     ) -> list[Product]:
@@ -251,7 +262,7 @@ class Query:
         return [_order_from_row(row) for row in list_orders_for_user(user_email)]
 
     @strawberry.field
-    def order(self, id: strawberry.ID) -> Optional[Order]:
+    def order(self, id: strawberry.ID) -> Order | None:
         try:
             row = get_order(int(id))
         except (TypeError, ValueError):
@@ -264,7 +275,7 @@ class Query:
         return [_subscription_from_row(row) for row in rows]
 
     @strawberry.field
-    def user(self, email: str) -> Optional[User]:
+    def user(self, email: str) -> User | None:
         row = get_user_by_email(email)
         return _user_from_row(row) if row else None
 
@@ -284,12 +295,10 @@ router = APIRouter(prefix="/graphql", tags=["graphql"])
 
 
 @router.post("", include_in_schema=True, summary="Execute a GraphQL query")
-async def graphql_post(request: Request):
+async def graphql_post(request: Request) -> JSONResponse:
     # Read once so we can both score it and hand it to Strawberry.
     body_bytes = await request.body()
     try:
-        import json
-
         payload = json.loads(body_bytes or b"{}")
     except json.JSONDecodeError:
         return JSONResponse({"errors": [{"message": "invalid JSON body"}]}, status_code=400)
