@@ -154,6 +154,38 @@ def test_checkout_submit_api_flow_returns_json_order_id() -> None:
     assert "4242424242424242" not in str(body)
 
 
+# ── POST /admin credential-stuffing form handler ─────────────────────────
+
+
+def test_admin_form_login_rejects_unknown_user_with_401() -> None:
+    response = client.post(
+        "/admin",
+        data={"username": "nobody@example.com", "password": "wrong"},
+    )
+    assert response.status_code == 401
+    assert response.json()["error"] == "invalid_credentials"
+
+
+def test_admin_form_login_rejects_non_admin_user_with_403() -> None:
+    """A valid non-admin user authenticates but is denied admin access."""
+    from secrets import token_urlsafe
+
+    email = f"non-admin-{token_urlsafe(6)}@example.com"
+    password = token_urlsafe(20)
+    # Fresh non-admin user via the normal register flow.
+    reg = client.post(
+        "/api/v1/auth/register",
+        json={"email": email, "password": password, "name": "Not An Admin"},
+    )
+    assert reg.status_code == 200
+    response = client.post(
+        "/admin",
+        data={"username": email, "password": password},
+    )
+    assert response.status_code == 403
+    assert response.json()["error"] == "not_admin"
+
+
 def test_register_api_sets_so_session_cookie() -> None:
     """Successful auth flows set the `so_session` fixture cookie.
 

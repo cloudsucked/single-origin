@@ -516,9 +516,20 @@ In addition to the API login, the app serves a standard HTML login form to exerc
 | `POST` | `/login` | `application/x-www-form-urlencoded` | Standard HTML form submission (server validates Turnstile, then authenticates) |
 | `GET` | `/register` | `text/html` | Registration page with Turnstile |
 | `POST` | `/register` | `application/x-www-form-urlencoded` | Standard form submission |
+| `POST` | `/admin` | `application/x-www-form-urlencoded` | Admin console form login — `username` + `password` (Bot Management credential-stuffing surface) |
 | `POST` | `/checkout/submit` | `application/x-www-form-urlencoded` | Payment form submission (cc, exp, cvv, name, address, optional Turnstile token) |
 
 The HTML form login pattern is critical because Cloudflare's leaked credential detection specifically looks for common form-based authentication patterns (`username`/`email` + `password` fields in `application/x-www-form-urlencoded` POST requests).
+
+#### `POST /admin` behavior
+
+Implemented in `app/routes/auth.py::admin_form_login`. Required form fields: `username`, `password`. Uses `username` (not `email`) deliberately so Traffic Detections' custom detection location reads from `http.request.body.form["username"][0]` — matching the course guide's Task 4 Step 2 configuration.
+
+- Valid admin user + correct password → 200 + JWT + `so_session` cookie.
+- Valid user but non-admin role → 403 `{"error":"not_admin"}`.
+- Unknown user or wrong password → 401 `{"error":"invalid_credentials"}`.
+
+No origin-side rate limiting. Cloudflare Bot Management (JA4 counting) and Advanced Rate Limiting are the enforcement layers the lab configures, and the per-request 401/403 path keeps a credential-stuffing attacker iterating fast enough for the bot score and leaked-credentials signals to be observable.
 
 #### `POST /checkout/submit` behavior
 

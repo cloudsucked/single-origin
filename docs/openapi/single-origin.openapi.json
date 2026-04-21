@@ -47,6 +47,24 @@
         "title": "AuthUser",
         "type": "object"
       },
+      "Body_admin_form_login_admin_post": {
+        "properties": {
+          "password": {
+            "title": "Password",
+            "type": "string"
+          },
+          "username": {
+            "title": "Username",
+            "type": "string"
+          }
+        },
+        "required": [
+          "username",
+          "password"
+        ],
+        "title": "Body_admin_form_login_admin_post",
+        "type": "object"
+      },
       "Body_checkout_submit_checkout_submit_post": {
         "properties": {
           "billing_address": {
@@ -1153,6 +1171,68 @@
   },
   "openapi": "3.1.0",
   "paths": {
+    "/admin": {
+      "post": {
+        "description": "Form-encoded admin login at `/admin` for Bot Management exercises.\n\nImplement Bot Management Task 7 exercises credential stuffing against\nthis endpoint. The form uses `username` rather than `email` so Traffic\nDetections' custom detection location for `/admin` reads from\n`http.request.body.form[\"username\"][0]` (matching the course guide).\n\nBehavior:\n  - 401 on unknown user or wrong password.\n  - 403 if the user authenticates but is not an admin.\n  - 200 + JWT + so_session cookie on success.\n\nThere is no origin-side rate limiting \u2014 Cloudflare Bot Management and\nAdvanced Rate Limiting are the enforcement layers the lab configures.",
+        "operationId": "admin_form_login_admin_post",
+        "requestBody": {
+          "content": {
+            "application/x-www-form-urlencoded": {
+              "schema": {
+                "$ref": "#/components/schemas/Body_admin_form_login_admin_post"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AuthResponse"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Invalid credentials."
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Authenticated user lacks admin role."
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Admin console form login (credential-stuffing surface)",
+        "tags": [
+          "auth-forms"
+        ]
+      }
+    },
     "/api-docs": {
       "get": {
         "operationId": "api_docs_redirect_api_docs_get",

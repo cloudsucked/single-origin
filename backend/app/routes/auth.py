@@ -120,6 +120,43 @@ async def login_form(
 
 
 @form_router.post(
+    "/admin",
+    response_model=AuthResponse,
+    responses={
+        401: {"model": ErrorResponse, "description": "Invalid credentials."},
+        403: {"model": ErrorResponse, "description": "Authenticated user lacks admin role."},
+    },
+    summary="Admin console form login (credential-stuffing surface)",
+)
+async def admin_form_login(
+    username: str = Form(...),
+    password: str = Form(...),
+):
+    """Form-encoded admin login at `/admin` for Bot Management exercises.
+
+    Implement Bot Management Task 7 exercises credential stuffing against
+    this endpoint. The form uses `username` rather than `email` so Traffic
+    Detections' custom detection location for `/admin` reads from
+    `http.request.body.form["username"][0]` (matching the course guide).
+
+    Behavior:
+      - 401 on unknown user or wrong password.
+      - 403 if the user authenticates but is not an admin.
+      - 200 + JWT + so_session cookie on success.
+
+    There is no origin-side rate limiting — Cloudflare Bot Management and
+    Advanced Rate Limiting are the enforcement layers the lab configures.
+    """
+    user = get_user_by_email(username)
+    if not user or not verify_password(password, user["password"]):
+        return JSONResponse({"error": "invalid_credentials"}, status_code=401)
+    if user.get("role") != "admin":
+        return JSONResponse({"error": "not_admin"}, status_code=403)
+    user_dict = _to_user_dict(user)
+    return _auth_response(issue_token(user_dict), user_dict)
+
+
+@form_router.post(
     "/register",
     response_model=AuthResponse,
     responses={
