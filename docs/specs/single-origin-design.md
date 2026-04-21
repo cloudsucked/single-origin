@@ -495,6 +495,16 @@ enum SubscriptionPlan { EXPLORER CONNOISSEUR OFFICE }
 
 This schema has 6+ levels of nesting depth (Query → Product → Origin → Farm → Coordinates), which is sufficient for GraphQL depth/size limit testing.
 
+**Implementation note (Strawberry):** the `/graphql` handler is implemented in `app/routes/graphql.py` using `strawberry-graphql[fastapi]`. The backing types mirror the schema above with a practical subset wired to SQLite:
+
+- `Query.product(id)`, `Query.products(origin, roast, category, page, limit)`, `Query.order(id)`, `Query.orders(userEmail)`, `Query.subscriptions(userEmail)`, `Query.user(email)` are the root fields the lab exercises.
+- `Product.farm` and `Farm.origin` are mutually self-referential so learners can drill down to arbitrary depth (`product { farm { origin { farm { origin { ... } } } } }`). This is what Implement API Shield Task 11's depth-limit rule (`Max query depth ≤ 10`) triggers against.
+- `Product.reviews` returns a single synthetic review per product (enough for the field to resolve; not persisted).
+- `Order.items` returns an empty list — the MVP DB does not retain line-item detail, and the lab does not exercise it.
+- `User.orders` and `User.subscriptions` resolve against SQLite via the existing repository functions.
+
+The route does not mount Strawberry's `GraphQLRouter` — it executes queries against `schema.execute()` directly so the same handler can set the `X-SO-Complexity-Score` header used by API Shield Task 12's Advanced Rate Limiting rule.
+
 ### Meta Endpoints
 
 | Method | Path | Description |

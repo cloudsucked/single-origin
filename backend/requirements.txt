@@ -6,3 +6,4 @@ python-jose==3.5.0
 cryptography==43.0.3
 pydantic-settings==2.11.0
 email-validator==2.2.0
+strawberry-graphql[fastapi]==0.314.3

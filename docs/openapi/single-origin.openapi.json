@@ -434,72 +434,6 @@
         "title": "ErrorResponse",
         "type": "object"
       },
-      "GraphQLError": {
-        "properties": {
-          "message": {
-            "title": "Message",
-            "type": "string"
-          }
-        },
-        "required": [
-          "message"
-        ],
-        "title": "GraphQLError",
-        "type": "object"
-      },
-      "GraphQLRequest": {
-        "properties": {
-          "query": {
-            "title": "Query",
-            "type": "string"
-          },
-          "variables": {
-            "anyOf": [
-              {
-                "additionalProperties": true,
-                "type": "object"
-              },
-              {
-                "type": "null"
-              }
-            ],
-            "title": "Variables"
-          }
-        },
-        "required": [
-          "query"
-        ],
-        "title": "GraphQLRequest",
-        "type": "object"
-      },
-      "GraphQLResponse": {
-        "properties": {
-          "data": {
-            "additionalProperties": true,
-            "title": "Data",
-            "type": "object"
-          },
-          "errors": {
-            "anyOf": [
-              {
-                "items": {
-                  "$ref": "#/components/schemas/GraphQLError"
-                },
-                "type": "array"
-              },
-              {
-                "type": "null"
-              }
-            ],
-            "title": "Errors"
-          }
-        },
-        "required": [
-          "data"
-        ],
-        "title": "GraphQLResponse",
-        "type": "object"
-      },
       "HTTPValidationError": {
         "properties": {
           "detail": {
@@ -4330,8 +4264,8 @@
       }
     },
     "/graphql": {
-      "get": {
-        "operationId": "graphiql_graphql_get",
+      "post": {
+        "operationId": "graphql_post_graphql_post",
         "responses": {
           "200": {
             "content": {
@@ -4342,51 +4276,7 @@
             "description": "Successful Response"
           }
         },
-        "summary": "Graphiql",
-        "tags": [
-          "graphql"
-        ]
-      },
-      "post": {
-        "operationId": "graphql_query_graphql_post",
-        "requestBody": {
-          "content": {
-            "application/json": {
-              "schema": {
-                "$ref": "#/components/schemas/GraphQLRequest",
-                "examples": [
-                  {
-                    "query": "query { products { id name slug } }"
-                  }
-                ]
-              }
-            }
-          },
-          "required": true
-        },
-        "responses": {
-          "200": {
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/GraphQLResponse"
-                }
-              }
-            },
-            "description": "Successful Response"
-          },
-          "422": {
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/HTTPValidationError"
-                }
-              }
-            },
-            "description": "Validation Error"
-          }
-        },
-        "summary": "Graphql Query",
+        "summary": "Execute a GraphQL query",
         "tags": [
           "graphql"
         ]

@@ -347,6 +347,80 @@ def test_ai_chat_returns_502_when_gateway_misconfigured(monkeypatch) -> None:
     assert "ai_gateway_url_missing" in str(body)
 
 
+# ── Strawberry GraphQL schema ────────────────────────────────────────────
+
+
+def test_graphql_returns_products_from_real_schema() -> None:
+    response = client.post(
+        "/graphql",
+        json={"query": "{ products(limit: 5) { id name slug price } }"},
+    )
+    assert response.status_code == 200
+    body = response.json()
+    assert "errors" not in body, body
+    products = body["data"]["products"]
+    assert len(products) >= 1
+    first = products[0]
+    assert "id" in first and "name" in first and "price" in first
+    # `price` is a real Float, not a string — confirms the schema resolved it.
+    assert isinstance(first["price"], (int, float))
+
+
+def test_graphql_supports_deep_farm_origin_nesting() -> None:
+    """Self-referential Farm→Origin→Farm nesting is the depth fixture."""
+    deep_query = """
+    {
+      product(id: "1") {
+        id
+        name
+        farm {
+          name
+          origin {
+            country
+            farm {
+              name
+              origin {
+                country
+                farm {
+                  name
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+    """
+    response = client.post("/graphql", json={"query": deep_query})
+    assert response.status_code == 200
+    body = response.json()
+    assert "errors" not in body, body
+    inner = body["data"]["product"]["farm"]["origin"]["farm"]["origin"]["farm"]["name"]
+    assert isinstance(inner, str) and len(inner) > 0
+
+
+def test_graphql_sets_complexity_score_header() -> None:
+    response = client.post(
+        "/graphql",
+        json={"query": "{ products { id } }"},
+    )
+    assert response.status_code == 200
+    assert COMPLEXITY_HEADER in response.headers
+
+
+def test_graphql_rejects_invalid_json_with_400() -> None:
+    response = client.post(
+        "/graphql",
+        content="not json at all",
+        headers={"Content-Type": "application/json"},
+    )
+    assert response.status_code == 400
+
+
+# imported at top of test file helper block
+from app.services.complexity import COMPLEXITY_HEADER  # noqa: E402
+
+
 def test_register_api_sets_so_session_cookie() -> None:
     """Successful auth flows set the `so_session` fixture cookie.
 
