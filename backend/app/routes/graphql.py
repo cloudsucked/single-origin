@@ -11,7 +11,6 @@ from app.services.repository import (
     get_order,
     get_product,
     get_user_by_email,
-    list_all_orders,
     list_orders_for_user,
     list_products,
     list_subscriptions_for_user,
@@ -241,9 +240,15 @@ class Query:
         return [_product_from_row(row) for row in rows[start : start + limit]]
 
     @strawberry.field
-    def orders(self, user_email: Optional[str] = None) -> list[Order]:
-        rows = list_orders_for_user(user_email) if user_email else list_all_orders()
-        return [_order_from_row(row) for row in rows]
+    def orders(self, user_email: str) -> list[Order]:
+        """List orders for a specific user email.
+
+        `user_email` is required so this endpoint does not return every order
+        (with `card_last4`, `phone`, `billing_address`) to unauthenticated
+        callers. Implement API Shield Task 11 targets query depth/complexity
+        — not IDOR — so a list-everything field is out of scope.
+        """
+        return [_order_from_row(row) for row in list_orders_for_user(user_email)]
 
     @strawberry.field
     def order(self, id: strawberry.ID) -> Optional[Order]:
@@ -330,13 +335,23 @@ async def graphiql_ui() -> HTMLResponse:
     # Minimal GraphiQL launcher — the real interactive UI comes from the
     # Strawberry GraphQLRouter, but keeping a tiny HTML shim means a plain
     # `GET /graphql` still responds usefully even when JS disabled.
+    # GraphiQL 3.x expects React and ReactDOM in the page before its own bundle
+    # executes. Loading them from the same unpkg CDN as graphiql.min.js keeps
+    # the launcher self-contained with no build step.
     html = """
     <!doctype html>
     <html>
       <head>
         <title>Single Origin GraphQL</title>
-        <script src="https://unpkg.com/graphiql/graphiql.min.js"
-                crossorigin="anonymous"></script>
+        <script
+          src="https://unpkg.com/react@18/umd/react.production.min.js"
+          crossorigin="anonymous"></script>
+        <script
+          src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"
+          crossorigin="anonymous"></script>
+        <script
+          src="https://unpkg.com/graphiql/graphiql.min.js"
+          crossorigin="anonymous"></script>
         <link href="https://unpkg.com/graphiql/graphiql.min.css" rel="stylesheet" />
       </head>
       <body style="margin:0">
