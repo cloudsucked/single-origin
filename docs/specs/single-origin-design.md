@@ -516,9 +516,19 @@ In addition to the API login, the app serves a standard HTML login form to exerc
 | `POST` | `/login` | `application/x-www-form-urlencoded` | Standard HTML form submission (server validates Turnstile, then authenticates) |
 | `GET` | `/register` | `text/html` | Registration page with Turnstile |
 | `POST` | `/register` | `application/x-www-form-urlencoded` | Standard form submission |
-| `POST` | `/checkout/submit` | `application/x-www-form-urlencoded` | Payment form submission (cc, exp, cvv, name, address) |
+| `POST` | `/checkout/submit` | `application/x-www-form-urlencoded` | Payment form submission (cc, exp, cvv, name, address, optional Turnstile token) |
 
 The HTML form login pattern is critical because Cloudflare's leaked credential detection specifically looks for common form-based authentication patterns (`username`/`email` + `password` fields in `application/x-www-form-urlencoded` POST requests).
+
+#### `POST /checkout/submit` behavior
+
+Implemented in `app/routes/checkout.py`. Required form fields: `card_number`, `card_exp`, `card_cvv`, `billing_name`, `billing_address`. Optional: `billing_city`, `billing_country`, `billing_zip`, `phone`, `email`, `total`, `cf-turnstile-response`.
+
+- When `ENFORCE_TURNSTILE=true`, missing `cf-turnstile-response` returns 400, invalid token returns 403.
+- On success, an `orders` row is inserted with `card_last4` only (the full `card_number` is NOT persisted; this is an API Shield Sensitive Data Detection teaching surface, not a real PCI flow).
+- Browser callers receive a 303 redirect to `/checkout/confirmation?order_id=<id>`.
+- API callers that set `Accept: application/json` receive a 200 JSON body `{status, order_id, order}`.
+- This endpoint is the target for Turnstile pre-clearance (Implement Turnstile Task 4), Bot Management rate-limit rules (Implement Bot Management Task 7), and Advanced Rate Limiting keyed on order volume (Security Analytics Task 6).
 
 ### Additional Auth Endpoints (for Custom Detection Locations)
 

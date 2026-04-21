@@ -10,6 +10,7 @@ from app.routes.ai import router as ai_router
 from app.routes.auth import form_router as auth_form_router
 from app.routes.auth import router as auth_router
 from app.routes.cart import router as cart_router
+from app.routes.checkout import form_router as checkout_form_router
 from app.routes.contact import form_router as contact_form_router
 from app.routes.contact import router as contact_router
 from app.routes.misc import router as misc_router
@@ -24,6 +25,7 @@ from app.routes.wholesale import router as wholesale_router
 OPENAPI_TAGS = [
     {"name": "auth", "description": "Token issuance, registration, refresh, and JWKS endpoints."},
     {"name": "auth-forms", "description": "Form-based login and registration handlers used by the web UI."},
+    {"name": "checkout-forms", "description": "Form-based checkout submission (Turnstile, Bot Management, Advanced Rate Limiting surface)."},
     {"name": "contact", "description": "Contact form APIs and form post handlers."},
     {"name": "turnstile", "description": "Turnstile verification and challenge simulation endpoints."},
     {"name": "products", "description": "Catalog and product detail endpoints."},
@@ -64,6 +66,7 @@ app.include_router(contact_router)
 app.include_router(turnstile_router)
 app.include_router(auth_form_router)
 app.include_router(contact_form_router)
+app.include_router(checkout_form_router)
 app.include_router(products_router)
 app.include_router(cart_router)
 app.include_router(orders_router)

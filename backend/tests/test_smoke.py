@@ -109,6 +109,51 @@ def test_checkout_sdk_compromised_variant_includes_configured_exfil_url() -> Non
     assert "payments.singleorigin.example" in response.text
 
 
+# ── /checkout/submit form handler ─────────────────────────────────────────
+
+
+def _checkout_form_payload() -> dict[str, str]:
+    return {
+        "card_number": "4242424242424242",
+        "card_exp": "12/29",
+        "card_cvv": "123",
+        "billing_name": "Alex Demo",
+        "billing_address": "123 Roast St",
+        "billing_city": "San Francisco",
+        "billing_country": "US",
+        "billing_zip": "94107",
+        "phone": "+1-555-0100",
+        "email": "demo@singleorigin.example",
+        "total": "59.50",
+    }
+
+
+def test_checkout_submit_browser_flow_returns_303_redirect() -> None:
+    response = client.post(
+        "/checkout/submit",
+        data=_checkout_form_payload(),
+        follow_redirects=False,
+    )
+    assert response.status_code == 303
+    assert response.headers["location"].startswith("/checkout/confirmation?order_id=")
+
+
+def test_checkout_submit_api_flow_returns_json_order_id() -> None:
+    response = client.post(
+        "/checkout/submit",
+        data=_checkout_form_payload(),
+        headers={"Accept": "application/json"},
+        follow_redirects=False,
+    )
+    assert response.status_code == 200
+    body = response.json()
+    assert body["status"] == "placed"
+    assert isinstance(body["order_id"], int) and body["order_id"] > 0
+    # Only last 4 of card number is persisted; full PAN must not round-trip.
+    assert body["order"]["card_last4"] == "4242"
+    assert "4242424242424242" not in str(body)
+
+
 def test_register_api_sets_so_session_cookie() -> None:
     """Successful auth flows set the `so_session` fixture cookie.
 

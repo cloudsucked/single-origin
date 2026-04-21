@@ -47,6 +47,80 @@
         "title": "AuthUser",
         "type": "object"
       },
+      "Body_checkout_submit_checkout_submit_post": {
+        "properties": {
+          "billing_address": {
+            "title": "Billing Address",
+            "type": "string"
+          },
+          "billing_city": {
+            "default": "",
+            "title": "Billing City",
+            "type": "string"
+          },
+          "billing_country": {
+            "default": "",
+            "title": "Billing Country",
+            "type": "string"
+          },
+          "billing_name": {
+            "title": "Billing Name",
+            "type": "string"
+          },
+          "billing_zip": {
+            "default": "",
+            "title": "Billing Zip",
+            "type": "string"
+          },
+          "card_cvv": {
+            "title": "Card Cvv",
+            "type": "string"
+          },
+          "card_exp": {
+            "title": "Card Exp",
+            "type": "string"
+          },
+          "card_number": {
+            "title": "Card Number",
+            "type": "string"
+          },
+          "cf_turnstile_response": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Cf Turnstile Response"
+          },
+          "email": {
+            "default": "demo@singleorigin.example",
+            "title": "Email",
+            "type": "string"
+          },
+          "phone": {
+            "default": "",
+            "title": "Phone",
+            "type": "string"
+          },
+          "total": {
+            "default": 0.0,
+            "title": "Total",
+            "type": "number"
+          }
+        },
+        "required": [
+          "card_number",
+          "card_exp",
+          "card_cvv",
+          "billing_name",
+          "billing_address"
+        ],
+        "title": "Body_checkout_submit_checkout_submit_post",
+        "type": "object"
+      },
       "Body_login_form_login_post": {
         "properties": {
           "cf_turnstile_response": {
@@ -4055,6 +4129,46 @@
         ]
       }
     },
+    "/checkout/submit": {
+      "post": {
+        "description": "Form-encoded checkout submission.\n\nLab surface for API Shield schema validation, Turnstile pre-clearance,\nBot Management, Security Analytics, and Advanced Rate Limiting exercises.\nThe real app is an SPA; this endpoint exists so Cloudflare WAF sees a\nform POST with structured fields at a known path.\n\nBehavior:\n  - If `ENFORCE_TURNSTILE=true`, validates the `cf-turnstile-response`\n    token with Siteverify. 400 on missing token, 403 on invalid token.\n  - On success, inserts an `orders` row (status=`PROCESSING`), returns a\n    303 redirect to `/checkout/confirmation?order_id=<id>` for browser\n    navigation. API-first callers that pass `Accept: application/json`\n    get a 200 JSON response with the new `order_id` instead.\n  - The `card_number` and `card_cvv` fields are intentionally named so\n    that API Shield Sensitive Data Detection rules can match on them;\n    they are NOT persisted (only `card_last4` is written).",
+        "operationId": "checkout_submit_checkout_submit_post",
+        "requestBody": {
+          "content": {
+            "application/x-www-form-urlencoded": {
+              "schema": {
+                "$ref": "#/components/schemas/Body_checkout_submit_checkout_submit_post"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Submit a checkout form payload (legacy HTML form path)",
+        "tags": [
+          "checkout-forms"
+        ]
+      }
+    },
     "/contact/submit": {
       "post": {
         "operationId": "submit_contact_form_contact_submit_post",
@@ -4601,6 +4715,10 @@
     {
       "description": "Form-based login and registration handlers used by the web UI.",
       "name": "auth-forms"
+    },
+    {
+      "description": "Form-based checkout submission (Turnstile, Bot Management, Advanced Rate Limiting surface).",
+      "name": "checkout-forms"
     },
     {
       "description": "Contact form APIs and form post handlers.",
