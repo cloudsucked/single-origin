@@ -842,6 +842,51 @@ CMD ["uvicorn", "main:app", "--host", "0.0.0.0", "--port", "8080"]
 
 ---
 
+## Traffic Generator Assumptions
+
+Several Implement-tier AppSec courses (Security Analytics, Bot Management, Traffic Detections, Advanced DDoS) make promises about traffic shape — JA4 diversity, source-IP diversity, volumetric bursts, real client certificates — that the CML traffic generator cannot produce at the scale the lab narrative sometimes implies. Lab authors should treat this section as the reality check when designing tasks.
+
+### What the traffic generator CAN produce
+
+- Deterministic sequence of requests against specific paths, with configurable iteration counts, variable expansion (`$VAR{a|b|c}`), and timing.
+- Per-request custom headers (including `Cf-Client-Cert-*` forge for debugging, and `CF_EXPOSED_USERNAME` / `CF_EXPOSED_PASSWORD` for Leaked Credentials Detection forced matches).
+- Both browser-shape (full header set, correct `User-Agent`) and API-client-shape (`SingleOrigin-Mobile/3.1.0`, curl-style) requests in the same profile.
+- Multiple parallel traffic sequences on one pod (user + attacker profiles concurrently).
+- Form-encoded and JSON request bodies at arbitrary paths.
+
+### What the traffic generator CANNOT produce
+
+- **JA4 fingerprint diversity.** All requests from one generator instance use the generator's TLS stack and therefore share one JA4 fingerprint. Labs that expect Cloudflare to rate-limit by JA4 must frame the lesson as "learners observe that ONE attacker fingerprint emits N requests" rather than "hundreds of distinct JA4s converge on the endpoint".
+- **Source-IP diversity.** Generator IPs come from CML's pool (typically a handful of addresses). Rate-limit-by-IP rules will trigger trivially; rules that depend on seeing hundreds of distinct source IPs (legitimate-looking distributed traffic) will not.
+- **ASN / country diversity.** Generator sites are concentrated. Geographic / ASN-based rules will see one or two ASNs total.
+- **Real mTLS client certificate presentation.** The generator does not hold a client cert and cannot complete an mTLS handshake against the `wholesale.` or `iot.` hostnames. Implement mTLS labs rely on `curl --cert` from the pod and on the `/debug/headers` echo to validate the managed-transform flow — not on generator traffic.
+- **Volumetric attacks (thousands of req/s).** The generator is not a load tool. For deterministic DDoS event generation, use Cloudflare's built-in DDoS Test rule with the `blockme=<token>` query parameter — this triggers a synthetic DDoS event regardless of traffic volume. For controlled bursts up to ~tens of req/s, an explicit `curl` loop from the pod is acceptable.
+- **Client-Side Rendering (CSR) signals.** The generator does not execute JavaScript. Bot Management / Page Shield exercises that depend on a real browser running the JS Detections payload must be narrated or demonstrated manually; the generator can only produce header-and-body traffic that looks like either a browser or an automated client, not one that actually renders the page.
+
+### Guidance for lab authors
+
+When a task depends on one of the CANNOT items:
+
+1. **Frame the lesson around what the signal LOOKS like**, not around generator output. Use screenshots and a narrated walk-through of a realistic event, clearly labelled as a recorded example.
+2. **Provide a manual invocation step** in the course guide — `curl` one-liners, a browser navigation, or a pod SSH + scripted sequence — so the learner actually sees the feature respond.
+3. **Use Cloudflare's built-in test primitives** where they exist: the DDoS Test rule for DDoS, `CF_EXPOSED_*` headers for leaked credentials, EICAR strings for Content Scanning, the `X-SO-Complexity-Score` header on API Shield complexity tasks.
+4. **Document the limitation in the course research brief** so future maintainers know why a task is narrated rather than exercised.
+
+### Summary table
+
+| Signal / capability | Generator can produce? | Lab strategy |
+|---------------------|------------------------|--------------|
+| Distinct paths, headers, bodies | Yes | Straightforward |
+| Form / JSON body shapes | Yes | Straightforward |
+| `CF_EXPOSED_*` test headers | Yes | Straightforward |
+| JA4 diversity | No (one fingerprint per generator) | Narrate; use `curl` for a second fingerprint |
+| Source-IP / ASN diversity | No (handful of CML pool IPs) | Narrate; do not rate-limit by IP in-task |
+| Real mTLS client cert | No | Use `curl --cert` from the pod, plus `/debug/headers` |
+| Volumetric DDoS (1000s rps) | No | Use Cloudflare DDoS Test rule (`blockme=<token>`) |
+| JS execution / CSR signals | No | Narrate; walk through the dashboard |
+
+---
+
 ## Appendix: Endpoint Count Summary
 
 | Category | Count |
