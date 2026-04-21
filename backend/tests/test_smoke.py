@@ -7,6 +7,7 @@ from fastapi.testclient import TestClient
 
 from app.db import init_db, seed_db
 from app.main import app
+from app.services.complexity import COMPLEXITY_HEADER
 
 init_db()
 seed_db()
@@ -415,10 +416,6 @@ def test_graphql_rejects_invalid_json_with_400() -> None:
         headers={"Content-Type": "application/json"},
     )
     assert response.status_code == 400
-
-
-# imported at top of test file helper block
-from app.services.complexity import COMPLEXITY_HEADER  # noqa: E402
 
 
 def test_register_api_sets_so_session_cookie() -> None:
