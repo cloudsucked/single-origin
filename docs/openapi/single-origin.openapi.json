@@ -47,6 +47,98 @@
         "title": "AuthUser",
         "type": "object"
       },
+      "Body_admin_form_login_admin_post": {
+        "properties": {
+          "password": {
+            "title": "Password",
+            "type": "string"
+          },
+          "username": {
+            "title": "Username",
+            "type": "string"
+          }
+        },
+        "required": [
+          "username",
+          "password"
+        ],
+        "title": "Body_admin_form_login_admin_post",
+        "type": "object"
+      },
+      "Body_checkout_submit_checkout_submit_post": {
+        "properties": {
+          "billing_address": {
+            "title": "Billing Address",
+            "type": "string"
+          },
+          "billing_city": {
+            "default": "",
+            "title": "Billing City",
+            "type": "string"
+          },
+          "billing_country": {
+            "default": "",
+            "title": "Billing Country",
+            "type": "string"
+          },
+          "billing_name": {
+            "title": "Billing Name",
+            "type": "string"
+          },
+          "billing_zip": {
+            "default": "",
+            "title": "Billing Zip",
+            "type": "string"
+          },
+          "card_cvv": {
+            "title": "Card Cvv",
+            "type": "string"
+          },
+          "card_exp": {
+            "title": "Card Exp",
+            "type": "string"
+          },
+          "card_number": {
+            "title": "Card Number",
+            "type": "string"
+          },
+          "cf_turnstile_response": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Cf Turnstile Response"
+          },
+          "email": {
+            "default": "demo@singleorigin.example",
+            "title": "Email",
+            "type": "string"
+          },
+          "phone": {
+            "default": "",
+            "title": "Phone",
+            "type": "string"
+          },
+          "total": {
+            "default": 0.0,
+            "title": "Total",
+            "type": "number"
+          }
+        },
+        "required": [
+          "card_number",
+          "card_exp",
+          "card_cvv",
+          "billing_name",
+          "billing_address"
+        ],
+        "title": "Body_checkout_submit_checkout_submit_post",
+        "type": "object"
+      },
       "Body_login_form_login_post": {
         "properties": {
           "cf_turnstile_response": {
@@ -340,72 +432,6 @@
           "error"
         ],
         "title": "ErrorResponse",
-        "type": "object"
-      },
-      "GraphQLError": {
-        "properties": {
-          "message": {
-            "title": "Message",
-            "type": "string"
-          }
-        },
-        "required": [
-          "message"
-        ],
-        "title": "GraphQLError",
-        "type": "object"
-      },
-      "GraphQLRequest": {
-        "properties": {
-          "query": {
-            "title": "Query",
-            "type": "string"
-          },
-          "variables": {
-            "anyOf": [
-              {
-                "additionalProperties": true,
-                "type": "object"
-              },
-              {
-                "type": "null"
-              }
-            ],
-            "title": "Variables"
-          }
-        },
-        "required": [
-          "query"
-        ],
-        "title": "GraphQLRequest",
-        "type": "object"
-      },
-      "GraphQLResponse": {
-        "properties": {
-          "data": {
-            "additionalProperties": true,
-            "title": "Data",
-            "type": "object"
-          },
-          "errors": {
-            "anyOf": [
-              {
-                "items": {
-                  "$ref": "#/components/schemas/GraphQLError"
-                },
-                "type": "array"
-              },
-              {
-                "type": "null"
-              }
-            ],
-            "title": "Errors"
-          }
-        },
-        "required": [
-          "data"
-        ],
-        "title": "GraphQLResponse",
         "type": "object"
       },
       "HTTPValidationError": {
@@ -1079,6 +1105,68 @@
   },
   "openapi": "3.1.0",
   "paths": {
+    "/admin": {
+      "post": {
+        "description": "Form-encoded admin login at `/admin` for Bot Management exercises.\n\nImplement Bot Management Task 7 exercises credential stuffing against\nthis endpoint. The form uses `username` rather than `email` so Traffic\nDetections' custom detection location for `/admin` reads from\n`http.request.body.form[\"username\"][0]` (matching the course guide).\n\nBehavior:\n  - 401 on unknown user or wrong password.\n  - 403 if the user authenticates but is not an admin.\n  - 200 + JWT + so_session cookie on success.\n\nThere is no origin-side rate limiting \u2014 Cloudflare Bot Management and\nAdvanced Rate Limiting are the enforcement layers the lab configures.",
+        "operationId": "admin_form_login_admin_post",
+        "requestBody": {
+          "content": {
+            "application/x-www-form-urlencoded": {
+              "schema": {
+                "$ref": "#/components/schemas/Body_admin_form_login_admin_post"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AuthResponse"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Invalid credentials."
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Authenticated user lacks admin role."
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Admin console form login (credential-stuffing surface)",
+        "tags": [
+          "auth-forms"
+        ]
+      }
+    },
     "/api-docs": {
       "get": {
         "operationId": "api_docs_redirect_api_docs_get",
@@ -1097,6 +1185,7 @@
     },
     "/api/mobile/login": {
       "post": {
+        "description": "Alt-auth JSON login for Traffic Detections custom detection locations.\n\nBody shape: `{\"email\": \"...\", \"password\": \"...\"}`. Returns 200 + JWT\non success, 401 `{error: invalid_credentials}` on failure. Field name\nis `email` (not `username`) deliberately \u2014 Traffic Detections Task 4\nStep 3b configures two separate detection locations to show learners\nhow the `lookup_json_string` key differs between the two endpoints.",
         "operationId": "mobile_login_api_mobile_login_post",
         "requestBody": {
           "content": {
@@ -1130,7 +1219,7 @@
             "description": "Validation Error"
           }
         },
-        "summary": "Mobile Login",
+        "summary": "Alt-auth mobile: JSON {email, password}",
         "tags": [
           "misc"
         ]
@@ -4016,6 +4105,7 @@
     },
     "/api/v2/auth": {
       "post": {
+        "description": "Alt-auth JSON login for Traffic Detections custom detection locations.\n\nBody shape: `{\"username\": \"...\", \"password\": \"...\"}`. Returns 200 + JWT\non success, 401 `{error: invalid_credentials}` on failure. The endpoint\nis deliberately non-standard (v2 namespace, JSON rather than form) so\nTraffic Detections Task 4 can teach `lookup_json_string(...)` detection\nlocations against it.",
         "operationId": "auth_v2_api_v2_auth_post",
         "requestBody": {
           "content": {
@@ -4049,9 +4139,49 @@
             "description": "Validation Error"
           }
         },
-        "summary": "Auth V2",
+        "summary": "Alt-auth v2: JSON {username, password}",
         "tags": [
           "misc"
+        ]
+      }
+    },
+    "/checkout/submit": {
+      "post": {
+        "description": "Form-encoded checkout submission.\n\nLab surface for API Shield schema validation, Turnstile pre-clearance,\nBot Management, Security Analytics, and Advanced Rate Limiting exercises.\nThe real app is an SPA; this endpoint exists so Cloudflare WAF sees a\nform POST with structured fields at a known path.\n\nBehavior:\n  - If `ENFORCE_TURNSTILE=true`, validates the `cf-turnstile-response`\n    token with Siteverify. 400 on missing token, 403 on invalid token.\n  - On success, inserts an `orders` row (status=`PROCESSING`), returns a\n    303 redirect to `/checkout/confirmation?order_id=<id>` for browser\n    navigation. API-first callers that pass `Accept: application/json`\n    get a 200 JSON response with the new `order_id` instead.\n  - The `card_number` and `card_cvv` fields are intentionally named so\n    that API Shield Sensitive Data Detection rules can match on them;\n    they are NOT persisted (only `card_last4` is written).",
+        "operationId": "checkout_submit_checkout_submit_post",
+        "requestBody": {
+          "content": {
+            "application/x-www-form-urlencoded": {
+              "schema": {
+                "$ref": "#/components/schemas/Body_checkout_submit_checkout_submit_post"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Submit a checkout form payload (legacy HTML form path)",
+        "tags": [
+          "checkout-forms"
         ]
       }
     },
@@ -4094,6 +4224,30 @@
         ]
       }
     },
+    "/debug/headers": {
+      "get": {
+        "description": "Return the full set of headers the origin received, unmodified.\n\nUsed by Implement mTLS Task 8 to verify that Cloudflare's Managed Transform\nis forwarding the `Cf-Client-Cert-*` headers to the origin. No authentication\nor authorization; read-only; available on all four lab hostnames.\n\nHeaders are returned in the order the ASGI server presents them, with\noriginal casing preserved via `request.headers.raw`. Values are not\nredacted \u2014 this endpoint is a debugging tool for lab pods, not a\nproduction endpoint.",
+        "operationId": "debug_headers_debug_headers_get",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "additionalProperties": true,
+                  "title": "Response Debug Headers Debug Headers Get",
+                  "type": "object"
+                }
+              }
+            },
+            "description": "Successful Response"
+          }
+        },
+        "summary": "Echo incoming request headers for mTLS managed-transform validation",
+        "tags": [
+          "misc"
+        ]
+      }
+    },
     "/favicon.ico": {
       "get": {
         "operationId": "favicon_favicon_ico_get",
@@ -4114,8 +4268,8 @@
       }
     },
     "/graphql": {
-      "get": {
-        "operationId": "graphiql_graphql_get",
+      "post": {
+        "operationId": "graphql_post_graphql_post",
         "responses": {
           "200": {
             "content": {
@@ -4126,51 +4280,7 @@
             "description": "Successful Response"
           }
         },
-        "summary": "Graphiql",
-        "tags": [
-          "graphql"
-        ]
-      },
-      "post": {
-        "operationId": "graphql_query_graphql_post",
-        "requestBody": {
-          "content": {
-            "application/json": {
-              "schema": {
-                "$ref": "#/components/schemas/GraphQLRequest",
-                "examples": [
-                  {
-                    "query": "query { products { id name slug } }"
-                  }
-                ]
-              }
-            }
-          },
-          "required": true
-        },
-        "responses": {
-          "200": {
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/GraphQLResponse"
-                }
-              }
-            },
-            "description": "Successful Response"
-          },
-          "422": {
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/HTTPValidationError"
-                }
-              }
-            },
-            "description": "Validation Error"
-          }
-        },
-        "summary": "Graphql Query",
+        "summary": "Execute a GraphQL query",
         "tags": [
           "graphql"
         ]
@@ -4196,6 +4306,26 @@
         "summary": "Health"
       }
     },
+    "/js/cart.js": {
+      "get": {
+        "description": "Seed the `so_cart` first-party cookie for Page Shield Cookie Monitor.\n\nReads the SvelteKit-managed cart state from localStorage and mirrors it\ninto a base64-encoded cookie. Runs once per page load; no-op if the cookie\nalready matches the current cart. Purely lab-only observability surface \u2014\nthe real cart state continues to live in localStorage and server-side.",
+        "operationId": "cart_js_js_cart_js_get",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            },
+            "description": "Successful Response"
+          }
+        },
+        "summary": "Cart Js",
+        "tags": [
+          "misc"
+        ]
+      }
+    },
     "/js/chat-widget.js": {
       "get": {
         "operationId": "chat_widget_js_js_chat_widget_js_get",
@@ -4217,6 +4347,7 @@
     },
     "/js/checkout-sdk.js": {
       "get": {
+        "description": "Serve the safe (`v=1.2.3`) or compromised (`v=1.2.4`) checkout SDK.\n\nPage Shield Task 9 simulates a supply-chain attack by flipping the\ntraffic-profile to request `v=1.2.4`, which includes an outbound fetch\nto the exfil URL configured via the `CHECKOUT_SDK_EXFIL_URL` env var\n(defaults to `https://exfil.{SLUG}.sxplab.com/skim` \u2014 the `{SLUG}`\nplaceholder stays literal in the served JS so lab deployments that\ndo not override the env var still produce an observably distinct\noutbound connection).",
         "operationId": "checkout_sdk_js_checkout_sdk_js_get",
         "parameters": [
           {
@@ -4289,6 +4420,26 @@
           }
         },
         "summary": "Newsletter Js",
+        "tags": [
+          "misc"
+        ]
+      }
+    },
+    "/js/prefs.js": {
+      "get": {
+        "description": "Seed the `so_prefs` first-party cookie for Page Shield Cookie Monitor.\n\nStores the learner's display and roast-level preferences as a JSON string.\nDefault payload is written on first visit; subsequent visits leave the\ncookie intact so Account Preferences page can continue to update it.",
+        "operationId": "prefs_js_js_prefs_js_get",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            },
+            "description": "Successful Response"
+          }
+        },
+        "summary": "Prefs Js",
         "tags": [
           "misc"
         ]
@@ -4540,6 +4691,10 @@
     {
       "description": "Form-based login and registration handlers used by the web UI.",
       "name": "auth-forms"
+    },
+    {
+      "description": "Form-based checkout submission (Turnstile, Bot Management, Advanced Rate Limiting surface).",
+      "name": "checkout-forms"
     },
     {
       "description": "Contact form APIs and form post handlers.",

@@ -29,6 +29,25 @@ class Settings(BaseSettings):
     seed_admin_password: str = ""
     seed_test_users_password: str = ""
 
+    # Page Shield checkout-sdk compromised-variant exfil target. The app serves
+    # two variants from `/js/checkout-sdk.js`: `v=1.2.3` (safe) and `v=1.2.4`
+    # (compromised, exfils cart to this URL). Default is a lab-zone subdomain
+    # so DNS resolves and Cloudflare can log the outbound connection; override
+    # via CHECKOUT_SDK_EXFIL_URL in CML pod env to point at a different host.
+    # Use the literal `{SLUG}` placeholder in the default to force an explicit
+    # choice in every pod (no accidental shared default).
+    checkout_sdk_exfil_url: str = "https://exfil.{SLUG}.sxplab.com/skim"
+
+    # AI Gateway proxy mode. When AI_GATEWAY_ENABLED=true, /api/v1/ai/chat and
+    # /api/v1/ai/recommend proxy the prompt to Cloudflare AI Gateway instead
+    # of returning the canned lab response. The AI Security for Apps course
+    # depends on real prompt traffic flowing through the gateway so the
+    # learner can observe PII redaction, prompt-injection detection, etc.
+    ai_gateway_enabled: bool = False
+    ai_gateway_url: str = ""  # e.g. "https://gateway.ai.cloudflare.com/v1/{account_id}/{gateway_id}/workers-ai/@cf/meta/llama-3.1-8b-instruct"
+    ai_gateway_token: str = ""  # Bearer token passed as `cf-aig-authorization: Bearer <token>`
+    ai_model: str = "@cf/meta/llama-3.1-8b-instruct"
+
     model_config = SettingsConfigDict(env_file=".env", env_file_encoding="utf-8")
 
 

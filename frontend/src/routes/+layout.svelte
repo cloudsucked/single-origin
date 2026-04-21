@@ -3,6 +3,7 @@
   import { onMount } from 'svelte';
   import { cartCount, loadCart } from '$lib/cart';
   import { authUser, isLoggedIn } from '$lib/auth';
+  import { apiBaseUrl } from '$lib/config';
 
   let mobileMenuOpen = false;
 
@@ -18,6 +19,15 @@
 
 <svelte:head>
   <title>Single Origin</title>
+  <!--
+    Cookie fixture bundles — lab-only, seed the `so_cart`, `so_prefs`, and
+    `so_consent` cookies so Cloudflare Page Shield Cookie Monitor has the
+    full documented first-party set to observe. See
+    docs/specs/single-origin-design.md §Cookies.
+  -->
+  <script src={`${apiBaseUrl}/js/cookie-consent.js`} defer></script>
+  <script src={`${apiBaseUrl}/js/cart.js`} defer></script>
+  <script src={`${apiBaseUrl}/js/prefs.js`} defer></script>
 </svelte:head>
 
 <style>

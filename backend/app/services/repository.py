@@ -4,6 +4,22 @@ from app.db import get_conn
 from app.services.passwords import hash_password
 
 
+def public_user_dict(user: dict) -> dict:
+    """Project a user row from SQLite onto the public response shape.
+
+    Used by the auth, alt-auth, and GraphQL paths so they emit the exact
+    same field set (`id`, `email`, `name`, `role`) and never leak the
+    password hash. Kept in the repository module so the projection lives
+    with the queries that produce it.
+    """
+    return {
+        "id": user["id"],
+        "email": user["email"],
+        "name": user["name"],
+        "role": user["role"],
+    }
+
+
 def get_user_by_email(email: str) -> dict | None:
     with get_conn() as conn:
         row = conn.execute(
