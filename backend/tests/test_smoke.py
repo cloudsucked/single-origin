@@ -255,6 +255,98 @@ def test_api_mobile_login_rejects_username_field() -> None:
     assert response.status_code == 400
 
 
+# ── AI Gateway proxy mode ────────────────────────────────────────────────
+
+
+def test_ai_chat_defaults_to_canned_response_when_gateway_disabled() -> None:
+    """With AI_GATEWAY_ENABLED=false (default), the canned lab response flows."""
+    response = client.post(
+        "/api/v1/ai/chat",
+        json={"model": "brew-assistant-v1", "messages": [{"role": "user", "content": "test"}]},
+    )
+    assert response.status_code == 200
+    body = response.json()
+    assert body["id"] == "chatcmpl-so-1"
+    assert "Yirgacheffe" in body["choices"][0]["message"]["content"]
+
+
+def test_ai_chat_proxies_to_ai_gateway_when_enabled(monkeypatch) -> None:
+    """When AI_GATEWAY_ENABLED=true, the handler proxies and normalizes the response."""
+    import httpx
+
+    from app.config import settings
+
+    captured = {}
+
+    class FakeResponse:
+        status_code = 200
+
+        def json(self):
+            return {
+                "id": "chatcmpl-abc123",
+                "object": "chat.completion",
+                "choices": [
+                    {"index": 0, "message": {"role": "assistant", "content": "Fake gateway reply"}}
+                ],
+            }
+
+    class FakeAsyncClient:
+        def __init__(self, *args, **kwargs):
+            pass
+
+        async def __aenter__(self):
+            return self
+
+        async def __aexit__(self, *args):
+            return False
+
+        async def post(self, url, headers=None, json=None):
+            captured["url"] = url
+            captured["headers"] = headers or {}
+            captured["json"] = json or {}
+            return FakeResponse()
+
+    monkeypatch.setattr(httpx, "AsyncClient", FakeAsyncClient)
+    monkeypatch.setattr(settings, "ai_gateway_enabled", True)
+    monkeypatch.setattr(
+        settings,
+        "ai_gateway_url",
+        "https://gateway.ai.cloudflare.com/v1/acc/gw/workers-ai/@cf/meta/llama-3.1-8b-instruct",
+    )
+    monkeypatch.setattr(settings, "ai_gateway_token", "test-token-xyz")
+
+    response = client.post(
+        "/api/v1/ai/chat",
+        json={"model": "brew-assistant-v1", "messages": [{"role": "user", "content": "hi"}]},
+    )
+    assert response.status_code == 200
+    body = response.json()
+    assert body["id"] == "chatcmpl-abc123"
+    assert body["choices"][0]["message"]["content"] == "Fake gateway reply"
+
+    # Verify the proxy actually called the gateway with the right headers and
+    # that the model alias was rewritten from the lab name to the real model.
+    assert captured["url"] == settings.ai_gateway_url
+    assert captured["headers"]["cf-aig-authorization"] == "Bearer test-token-xyz"
+    assert captured["json"]["model"] == settings.ai_model
+
+
+def test_ai_chat_returns_502_when_gateway_misconfigured(monkeypatch) -> None:
+    """Enabled but no URL configured → 502, not a silent fallback."""
+    from app.config import settings
+
+    monkeypatch.setattr(settings, "ai_gateway_enabled", True)
+    monkeypatch.setattr(settings, "ai_gateway_url", "")
+
+    response = client.post(
+        "/api/v1/ai/chat",
+        json={"model": "brew-assistant-v1", "messages": [{"role": "user", "content": "hi"}]},
+    )
+    assert response.status_code == 502
+    body = response.json()
+    assert "ai_gateway_url_missing" in str(body)
+
+
 def test_register_api_sets_so_session_cookie() -> None:
     """Successful auth flows set the `so_session` fixture cookie.
 
