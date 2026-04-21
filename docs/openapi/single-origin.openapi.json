@@ -4094,6 +4094,26 @@
         ]
       }
     },
+    "/debug/headers": {
+      "get": {
+        "description": "Return the full set of headers the origin received, unmodified.\n\nUsed by Implement mTLS Task 8 to verify that Cloudflare's Managed Transform\nis forwarding the `Cf-Client-Cert-*` headers to the origin. No authentication\nor authorization; read-only; available on all four lab hostnames.\n\nHeaders are returned in the order the ASGI server presents them, with\noriginal casing preserved via `request.headers.raw`. Values are not\nredacted \u2014 this endpoint is a debugging tool for lab pods, not a\nproduction endpoint.",
+        "operationId": "debug_headers_debug_headers_get",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            },
+            "description": "Successful Response"
+          }
+        },
+        "summary": "Echo incoming request headers for mTLS managed-transform validation",
+        "tags": [
+          "misc"
+        ]
+      }
+    },
     "/favicon.ico": {
       "get": {
         "operationId": "favicon_favicon_ico_get",

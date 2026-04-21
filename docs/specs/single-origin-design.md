@@ -481,6 +481,28 @@ This schema has 6+ levels of nesting depth (Query → Product → Origin → Far
 | `GET` | `/health` | Health check (`{"status": "healthy", "version": "1.0.0"}`) |
 | `GET` | `/robots.txt` | Basic robots file (can be overridden by Cloudflare Managed robots.txt) |
 | `GET` | `/favicon.ico` | Site favicon |
+| `GET` | `/debug/headers` | Echo the full incoming header set as JSON (see "Debug Header Echo" below) |
+
+#### Debug Header Echo
+
+`GET /debug/headers` returns every HTTP header the origin received, in the order the ASGI server presents them, with original casing preserved. Response shape:
+
+```json
+{
+  "method": "GET",
+  "path": "/debug/headers",
+  "headers": [
+    {"name": "Host", "value": "api.lab-abcdef.sxplab.com"},
+    {"name": "Cf-Client-Cert-Subject-DN", "value": "CN=lab-client, O=Cloudflare Lab"},
+    {"name": "Cf-Client-Cert-Fingerprint-Sha256", "value": "..."}
+  ]
+}
+```
+
+- No authentication or authorization. Read-only, idempotent.
+- Available on all four lab hostnames (`www.`, `api.`, `wholesale.`, `iot.`).
+- Methods other than `GET` return 405.
+- Values are not redacted — this is a lab-only debugging endpoint used by Implement mTLS Task 8 to verify that Cloudflare's Managed Transform for `Cf-Client-Cert-*` forwarding is active.
 
 ---
 

@@ -2,7 +2,7 @@ from __future__ import annotations
 
 import json
 
-from fastapi import APIRouter, File, Query, Response as FastAPIResponse, UploadFile
+from fastapi import APIRouter, File, Query, Request, Response as FastAPIResponse, UploadFile
 from fastapi.responses import PlainTextResponse, Response
 
 from app.db import get_conn
@@ -10,6 +10,33 @@ from app.schemas.products import SearchResponse
 from app.services.complexity import COMPLEXITY_HEADER, score_search_query
 
 router = APIRouter(tags=["misc"])
+
+
+@router.get(
+    "/debug/headers",
+    summary="Echo incoming request headers for mTLS managed-transform validation",
+)
+async def debug_headers(request: Request):
+    """Return the full set of headers the origin received, unmodified.
+
+    Used by Implement mTLS Task 8 to verify that Cloudflare's Managed Transform
+    is forwarding the `Cf-Client-Cert-*` headers to the origin. No authentication
+    or authorization; read-only; available on all four lab hostnames.
+
+    Headers are returned in the order the ASGI server presents them, with
+    original casing preserved via `request.headers.raw`. Values are not
+    redacted — this endpoint is a debugging tool for lab pods, not a
+    production endpoint.
+    """
+    raw_headers = [
+        (key.decode("latin-1"), value.decode("latin-1"))
+        for key, value in request.headers.raw
+    ]
+    return {
+        "method": request.method,
+        "path": request.url.path,
+        "headers": [{"name": name, "value": value} for name, value in raw_headers],
+    }
 
 
 @router.get(
