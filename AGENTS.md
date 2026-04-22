@@ -55,7 +55,7 @@ git push github main
 ```
 
 Both remotes are already configured:
-- `origin` → `git@gitlab.cfdata.org:cloudflare/sxp/single-origin.git` (source of truth, CI runs here)
+- `origin` → `git@gitlab.cfdata.org:cloudflare/te/content/single-origin.git` (source of truth, CI runs here)
 - `github` → `git@github.com:cloudsucked/single-origin.git` (read by CML at pod creation time)
 
 **Never push directly to `github` without first merging to `origin/main`.**
