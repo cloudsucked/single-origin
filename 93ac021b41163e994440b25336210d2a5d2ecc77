@@ -1,0 +1,23 @@
+backend/tests/conftest.py
+  e84d13090494d3a3 10-13
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.2.8",
+  "base_commit_sha": "93ac021b41163e994440b25336210d2a5d2ecc77",
+  "prompts": {
+    "e84d13090494d3a3": {
+      "agent_id": {
+        "tool": "opencode",
+        "id": "ses_224067d90ffeUT9pD3GuCVmw3P",
+        "model": "openai/gpt-5.5"
+      },
+      "human_author": "Nico van Niekerk",
+      "messages": [],
+      "total_additions": 4,
+      "total_deletions": 1,
+      "accepted_lines": 4,
+      "overriden_lines": 0
+    }
+  }
+}
