@@ -1,9 +1,10 @@
 from __future__ import annotations
 
 from fastapi import APIRouter, HTTPException, Request
-from jose import JWTError, jwt
+from jose import JWTError
 
 from app.config import settings
+from app.services.jwt import decode_token
 from app.services.repository import get_user_by_email
 
 router = APIRouter(prefix="/api/v1/account", tags=["account"])
@@ -12,18 +13,20 @@ _ADDRESSES = [{"id": 1, "street": "123 Roast St", "city": "SF", "postalCode": "9
 
 
 def _get_email_from_token(request: Request) -> str | None:
-    """Return email from a valid Bearer JWT, None if no token present, or raise 401 if token is malformed/invalid."""
+    """Return email from a valid Bearer JWT, None if no token present, or raise 401 if token is malformed/invalid.
+
+    Uses ``decode_token()`` so HS256 dev mode and RS256 lab mode (with the
+    static ``lab-static-key-v1`` JWKS) both validate correctly. Previously this
+    function pinned to ``settings.jwt_secret_key`` + ``settings.jwt_algorithm``,
+    which silently 401-ed every traffic-generator-issued RS256 token in lab
+    pods even though the rest of the auth surface accepted them.
+    """
     auth = request.headers.get("authorization", "")
     if not auth.startswith("Bearer "):
         return None
     token = auth.removeprefix("Bearer ")
     try:
-        claims = jwt.decode(
-            token,
-            settings.jwt_secret_key,
-            algorithms=[settings.jwt_algorithm],
-            audience="single-origin-api",
-        )
+        claims = decode_token(token)
         return claims.get("email")
     except JWTError as exc:
         raise HTTPException(status_code=401, detail="invalid_token") from exc
