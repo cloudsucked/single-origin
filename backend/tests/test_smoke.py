@@ -439,3 +439,49 @@ def test_register_api_sets_so_session_cookie() -> None:
     # …and the so_session cookie is set for Page Shield Cookie Monitor.
     assert "so_session" in response.cookies
     assert response.cookies["so_session"] == body["token"]
+
+
+def test_account_accepts_login_issued_token() -> None:
+    """``/api/v1/account`` decodes the live JWT issued by ``/auth/login``.
+
+    Previously it pinned ``settings.jwt_secret_key`` + ``settings.jwt_algorithm``
+    directly, which silently 401-ed every RS256 lab-mode token even though the
+    JWT had been signed by the same backend. The fix routes through
+    ``decode_token`` so HS256 dev mode and RS256 lab mode both work.
+    """
+    login = client.post(
+        "/api/v1/auth/login",
+        json={
+            "email": "demo@singleorigin.example",
+            "password": "demo-password",
+        },
+    )
+    assert login.status_code == 200, login.text
+    token = login.json()["token"]
+
+    response = client.get(
+        "/api/v1/account",
+        headers={"Authorization": f"Bearer {token}"},
+    )
+    assert response.status_code == 200, response.text
+    payload = response.json()
+    assert payload["email"] == "demo@singleorigin.example"
+
+
+def test_account_returns_401_on_garbage_token() -> None:
+    """A malformed Bearer token must not silently fall through to demo data."""
+    response = client.get(
+        "/api/v1/account",
+        headers={"Authorization": "Bearer not-a-jwt"},
+    )
+    assert response.status_code == 401
+    assert response.json()["detail"] == "invalid_token"
+
+
+def test_account_falls_back_to_demo_when_no_authorization_header() -> None:
+    """Routes that pre-date auth still work for unauthenticated callers."""
+    response = client.get("/api/v1/account")
+    assert response.status_code == 200
+    payload = response.json()
+    # Falls back to ``settings.seed_demo_email`` when no Bearer token is set.
+    assert payload["email"] == "demo@singleorigin.example"
