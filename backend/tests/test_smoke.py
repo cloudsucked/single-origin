@@ -485,3 +485,41 @@ def test_account_falls_back_to_demo_when_no_authorization_header() -> None:
     payload = response.json()
     # Falls back to ``settings.seed_demo_email`` when no Bearer token is set.
     assert payload["email"] == "demo@singleorigin.example"
+
+
+def test_account_rejects_wrong_audience_token() -> None:
+    """A JWT signed by our key but issued for a different audience must 401.
+
+    Guards against the regression where ``decode_token()`` had ``verify_aud``
+    disabled, which would have let a token minted for a sibling service (or
+    leaked from another consumer of the same HS256 secret) impersonate a
+    single-origin user.
+    """
+    from datetime import UTC, datetime, timedelta
+
+    from jose import jwt
+
+    from app.config import settings
+
+    now = datetime.now(UTC)
+    forged = jwt.encode(
+        {
+            "sub": "1",
+            "email": "demo@singleorigin.example",
+            "name": "Alex Demo",
+            "role": "customer",
+            "iss": "single-origin",
+            "aud": "some-other-service",  # ← wrong audience
+            "iat": int(now.timestamp()),
+            "exp": int((now + timedelta(hours=1)).timestamp()),
+        },
+        settings.jwt_secret_key,
+        algorithm=settings.jwt_algorithm,
+    )
+
+    response = client.get(
+        "/api/v1/account",
+        headers={"Authorization": f"Bearer {forged}"},
+    )
+    assert response.status_code == 401
+    assert response.json()["detail"] == "invalid_token"

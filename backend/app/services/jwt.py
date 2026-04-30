@@ -16,6 +16,7 @@ from jose import jwt
 from app.config import settings
 
 _LAB_KEY_ID = "lab-static-key-v1"
+_AUDIENCE = "single-origin-api"
 
 
 @lru_cache(maxsize=1)
@@ -61,7 +62,7 @@ def issue_token(user: dict) -> str:
         "name": user["name"],
         "role": user["role"],
         "iss": "single-origin",
-        "aud": "single-origin-api",
+        "aud": _AUDIENCE,
         "iat": int(now.timestamp()),
         "exp": int((now + timedelta(hours=1)).timestamp()),
     }
@@ -76,19 +77,27 @@ def issue_token(user: dict) -> str:
 
 
 def decode_token(token: str) -> dict:
-    """Decode and verify a JWT using the active signing scheme."""
+    """Decode and verify a JWT using the active signing scheme.
+
+    Audience verification is enforced (``aud == "single-origin-api"``) so a
+    token signed by this backend's key but issued for a different audience
+    cannot impersonate a single-origin user. ``issue_token()`` always emits
+    that audience claim, and the lab traffic-generator's pre-signed RS256
+    tokens are issued with the same claim set, so enabling verification is
+    safe for both HS256 dev mode and RS256 lab mode.
+    """
     if lab_mode():
         return jwt.decode(
             token,
             _get_public_key(),  # type: ignore[arg-type]
             algorithms=["RS256"],
-            options={"verify_aud": False},
+            audience=_AUDIENCE,
         )
     return jwt.decode(
         token,
         settings.jwt_secret_key,
         algorithms=[settings.jwt_algorithm],
-        options={"verify_aud": False},
+        audience=_AUDIENCE,
     )
 
 
