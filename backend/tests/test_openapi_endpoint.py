@@ -15,6 +15,7 @@ after disabling the FastAPI built-ins.
 from __future__ import annotations
 
 import sys
+from collections.abc import Iterator
 from pathlib import Path
 
 import pytest
@@ -33,7 +34,7 @@ def client() -> TestClient:
 
 
 @pytest.fixture(autouse=True)
-def _reset_openapi_cache() -> None:
+def _reset_openapi_cache() -> Iterator[None]:
     """Clear the per-app OpenAPI cache between tests so settings overrides take effect."""
     app.openapi_schema = None
     yield
@@ -112,6 +113,66 @@ def test_openapi_endpoint_prefers_x_forwarded_host_over_host(
         },
     )
     assert resp.json()["servers"] == [{"url": "https://public.example"}]
+
+
+def test_openapi_endpoint_takes_first_proto_token_when_x_forwarded_proto_is_a_list(
+    client: TestClient, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    """RFC 7239 / nginx / HAProxy / AWS ALB can emit ``X-Forwarded-Proto: https, http``."""
+    monkeypatch.setattr(app_main.settings, "checkout_sdk_exfil_url", "")
+
+    resp = client.get(
+        "/openapi.json",
+        headers={
+            "host": "api.requestor.example",
+            "x-forwarded-proto": "https, http",
+        },
+    )
+    assert resp.json()["servers"] == [{"url": "https://api.requestor.example"}]
+
+
+def test_openapi_endpoint_rejects_unsafe_scheme_in_x_forwarded_proto(
+    client: TestClient, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    """A spoofed ``X-Forwarded-Proto: javascript`` must not poison the served servers URL."""
+    monkeypatch.setattr(app_main.settings, "checkout_sdk_exfil_url", "")
+
+    resp = client.get(
+        "/openapi.json",
+        headers={
+            "host": "api.requestor.example",
+            "x-forwarded-proto": "javascript",
+        },
+    )
+    # Anything outside {http, https} is replaced with https.
+    assert resp.json()["servers"] == [{"url": "https://api.requestor.example"}]
+
+
+def test_openapi_endpoint_rejects_injected_host_with_path_separator(
+    client: TestClient, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    """``Host: evil.example/poison`` would otherwise produce a URL with a stray path."""
+    monkeypatch.setattr(app_main.settings, "checkout_sdk_exfil_url", "")
+
+    resp = client.get(
+        "/openapi.json",
+        headers={"host": "evil.example/poison"},
+    )
+    # Falls through to the placeholder because the host fails validation.
+    assert resp.json()["servers"] == [{"url": app_main.DEFAULT_API_PUBLIC_URL}]
+
+
+def test_openapi_endpoint_rejects_injected_host_with_userinfo(
+    client: TestClient, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    """``Host: user@evil.example`` would otherwise become ``https://user@evil.example``."""
+    monkeypatch.setattr(app_main.settings, "checkout_sdk_exfil_url", "")
+
+    resp = client.get(
+        "/openapi.json",
+        headers={"host": "attacker@evil.example"},
+    )
+    assert resp.json()["servers"] == [{"url": app_main.DEFAULT_API_PUBLIC_URL}]
 
 
 # ---------------------------------------------------------------------------

@@ -73,9 +73,21 @@ def fix_schema(node: Any, *, _path: str = "$") -> Any:
                     _path,
                 )
             elif len(non_null) == 1:
-                # Collapse the single remaining branch into the parent.
-                merged = {k: v for k, v in node.items() if k != "anyOf"}
-                merged.update(non_null[0])
+                # Collapse the single remaining branch into the parent. The
+                # branch carries the type information (``type``, ``$ref``,
+                # ``format``, etc.) and the parent carries the annotation
+                # metadata (``title``, ``description``, ``default``,
+                # ``example``). FastAPI/Pydantic v2 emits ``anyOf`` nodes
+                # where both layers can carry overlapping keys; Pydantic
+                # generally repeats the parent's ``title`` on the branch.
+                # When keys collide we keep the parent's value because the
+                # parent is the authoring surface (the caller's
+                # ``Field(description=...)``) and the branch is the
+                # implementation detail. Branch keys still win for anything
+                # the parent does not already define (the type information
+                # is the obvious case).
+                parent_keys = {k: v for k, v in node.items() if k != "anyOf"}
+                merged = {**non_null[0], **parent_keys}
                 if had_null:
                     merged["nullable"] = True
                 return fix_schema(merged, _path=_path)

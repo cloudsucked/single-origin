@@ -73,6 +73,76 @@ def test_anyof_with_one_non_null_branch_collapses_to_nullable_field() -> None:
     assert token["title"] == "Token", "non-anyOf siblings must survive the collapse"
 
 
+def test_anyof_collapse_parent_annotation_wins_over_branch_annotation() -> None:
+    """When a parent and the surviving branch carry the same annotation key,
+    the parent's value must win.
+
+    Pydantic v2 sometimes emits ``anyOf`` nodes where the parent and the
+    non-null branch both carry ``title`` (the parent inherits from
+    ``Field(title=...)``, the branch from the inner type). The parent is the
+    authoring surface, so its value is canonical. The branch's value would
+    typically be a Pydantic-generated default like the field name, which is
+    less informative than what the author wrote.
+    """
+    spec = _minimal_spec(
+        {
+            "Body": {
+                "properties": {
+                    "x": {
+                        "anyOf": [
+                            {"type": "string", "title": "BranchTitle"},
+                            {"type": "null"},
+                        ],
+                        "title": "ParentTitle",
+                        "description": "parent description",
+                    }
+                }
+            }
+        }
+    )
+
+    out = to_cloudflare_compatible(spec, server_url=SERVER_URL)
+    prop = out["components"]["schemas"]["Body"]["properties"]["x"]
+
+    # Parent annotation values survived the collapse...
+    assert prop["title"] == "ParentTitle"
+    assert prop["description"] == "parent description"
+    # ...and the branch's type information is still present.
+    assert prop["type"] == "string"
+    assert prop["nullable"] is True
+
+
+def test_anyof_collapse_branch_keys_fill_in_what_parent_omits() -> None:
+    """If the parent does not define a key, the branch's value survives.
+
+    This is the inverse of the parent-wins case above. Type information
+    (``type``, ``$ref``, ``format``) lives on the branch, never on the
+    parent, so the merge must let branch keys through whenever the parent
+    is silent on a key.
+    """
+    spec = _minimal_spec(
+        {
+            "Body": {
+                "properties": {
+                    "x": {
+                        "anyOf": [
+                            {"type": "string", "format": "email"},
+                            {"type": "null"},
+                        ],
+                    }
+                }
+            }
+        }
+    )
+
+    out = to_cloudflare_compatible(spec, server_url=SERVER_URL)
+    prop = out["components"]["schemas"]["Body"]["properties"]["x"]
+
+    assert prop["type"] == "string"
+    assert prop["format"] == "email"
+    assert prop["nullable"] is True
+
+
 def test_anyof_without_null_keeps_anyof_intact() -> None:
     """Multi-branch anyOf without null is allowed in OAS 3.0 body schemas; leave it alone."""
     spec = _minimal_spec(

@@ -57,6 +57,29 @@ OPENAPI_URL = "/openapi.json"
 DOCS_URL = "/docs"
 REDOC_URL = "/redoc"
 
+# Schemes we accept when reading X-Forwarded-Proto to build the OpenAPI
+# ``servers`` URL. Anything else (``javascript``, ``data``, ``file``, ...) is
+# replaced with ``https`` so a caller who can spoof headers cannot poison
+# the served spec into pointing at an attacker-controlled URI scheme.
+_SAFE_SCHEMES = {"http", "https"}
+
+
+def _is_safe_host(host: str) -> bool:
+    """Reject obviously malformed or injected ``Host``/``X-Forwarded-Host`` values.
+
+    The bar here is intentionally low: we only need to ensure the value is a
+    plausible hostname (or hostname:port) before splicing it into a URL. A
+    real RFC 3986 host parser is overkill for the lab origin and would
+    introduce a dependency. Reject anything that contains structural URL
+    characters (``/``, ``@``, ``?``, ``#``), whitespace, or control bytes.
+    Empty values are rejected so the caller falls through to the placeholder.
+    """
+    if not host:
+        return False
+    if any(ch in host for ch in "/@?# \t\r\n"):
+        return False
+    return True
+
 
 # Disable FastAPI's built-in OpenAPI / Swagger UI / ReDoc routes so we can
 # register our own. We still serve all three URLs at the same paths the
@@ -143,13 +166,28 @@ def _resolve_runtime_server_url(request: Request) -> str:
     if env_url:
         return env_url
 
+    # Step 2: derive from request headers. Both header values flow into the
+    # ``servers`` URL of the served OpenAPI document, so they need defensive
+    # validation. A caller who can reach the origin directly (the lab/local
+    # trust posture this branch is designed for) could otherwise send
+    # ``X-Forwarded-Host: evil.example`` plus a custom proto and have
+    # auto-generated client code (``openapi-generator``, Postman import,
+    # etc.) point at an attacker-controlled host. The poisoned value lives
+    # only in JSON, so this is not an XSS or open-redirect vector — but it
+    # is worth blocking at the spec source.
     host = (
         request.headers.get("x-forwarded-host")
         or request.headers.get("host")
         or ""
     ).strip()
-    if host:
-        scheme = (request.headers.get("x-forwarded-proto") or request.url.scheme or "https").strip()
+    # X-Forwarded-Proto can arrive as a comma-separated list when traffic
+    # crosses multiple proxies (RFC 7239, nginx, HAProxy, AWS ALB). Take
+    # the leftmost token (the most recent hop's view).
+    raw_proto = (
+        request.headers.get("x-forwarded-proto") or request.url.scheme or "https"
+    ).split(",")[0].strip().lower()
+    if _is_safe_host(host):
+        scheme = raw_proto if raw_proto in _SAFE_SCHEMES else "https"
         return f"{scheme}://{host}"
 
     return DEFAULT_API_PUBLIC_URL

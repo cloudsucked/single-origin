@@ -41,8 +41,8 @@ Covered endpoints:
 
 ## OpenAPI Spec
 
-- Runtime OpenAPI JSON: `GET /openapi.json`
-- Runtime Swagger UI: `GET /api-docs` (redirects to `/docs`)
+- Runtime OpenAPI JSON: `GET /openapi.json` (Cloudflare API Shield-compatible OAS 3.0.3, see `backend/app/openapi_compat.py`)
+- Runtime Swagger UI: `GET /docs` (also reachable via `GET /api-docs`, which redirects to `/docs`)
 - Committed artifact: `docs/openapi/single-origin.openapi.json`
 
 Regenerate the committed OpenAPI artifact:
