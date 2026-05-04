@@ -103,15 +103,9 @@
             "type": "string"
           },
           "cf_turnstile_response": {
-            "anyOf": [
-              {
-                "type": "string"
-              },
-              {
-                "type": "null"
-              }
-            ],
-            "title": "Cf Turnstile Response"
+            "nullable": true,
+            "title": "Cf Turnstile Response",
+            "type": "string"
           },
           "email": {
             "default": "demo@singleorigin.example",
@@ -142,15 +136,9 @@
       "Body_login_form_login_post": {
         "properties": {
           "cf_turnstile_response": {
-            "anyOf": [
-              {
-                "type": "string"
-              },
-              {
-                "type": "null"
-              }
-            ],
-            "title": "Cf Turnstile Response"
+            "nullable": true,
+            "title": "Cf Turnstile Response",
+            "type": "string"
           },
           "email": {
             "title": "Email",
@@ -171,15 +159,9 @@
       "Body_register_form_register_post": {
         "properties": {
           "cf_turnstile_response": {
-            "anyOf": [
-              {
-                "type": "string"
-              },
-              {
-                "type": "null"
-              }
-            ],
-            "title": "Cf Turnstile Response"
+            "nullable": true,
+            "title": "Cf Turnstile Response",
+            "type": "string"
           },
           "email": {
             "title": "Email",
@@ -205,15 +187,9 @@
       "Body_submit_contact_form_contact_submit_post": {
         "properties": {
           "cf_turnstile_response": {
-            "anyOf": [
-              {
-                "type": "string"
-              },
-              {
-                "type": "null"
-              }
-            ],
-            "title": "Cf Turnstile Response"
+            "nullable": true,
+            "title": "Cf Turnstile Response",
+            "type": "string"
           },
           "email": {
             "title": "Email",
@@ -341,15 +317,9 @@
             "type": "array"
           },
           "model": {
-            "anyOf": [
-              {
-                "type": "string"
-              },
-              {
-                "type": "null"
-              }
-            ],
-            "title": "Model"
+            "nullable": true,
+            "title": "Model",
+            "type": "string"
           }
         },
         "required": [
@@ -552,30 +522,18 @@
             "type": "string"
           },
           "origin": {
-            "anyOf": [
-              {
-                "type": "string"
-              },
-              {
-                "type": "null"
-              }
-            ],
-            "title": "Origin"
+            "nullable": true,
+            "title": "Origin",
+            "type": "string"
           },
           "price": {
             "title": "Price",
             "type": "number"
           },
           "roast_level": {
-            "anyOf": [
-              {
-                "type": "string"
-              },
-              {
-                "type": "null"
-              }
-            ],
-            "title": "Roast Level"
+            "nullable": true,
+            "title": "Roast Level",
+            "type": "string"
           },
           "slug": {
             "title": "Slug",
@@ -633,30 +591,18 @@
             "type": "string"
           },
           "origin": {
-            "anyOf": [
-              {
-                "type": "string"
-              },
-              {
-                "type": "null"
-              }
-            ],
-            "title": "Origin"
+            "nullable": true,
+            "title": "Origin",
+            "type": "string"
           },
           "price": {
             "title": "Price",
             "type": "number"
           },
           "roast_level": {
-            "anyOf": [
-              {
-                "type": "string"
-              },
-              {
-                "type": "null"
-              }
-            ],
-            "title": "Roast Level"
+            "nullable": true,
+            "title": "Roast Level",
+            "type": "string"
           },
           "slug": {
             "title": "Slug",
@@ -783,30 +729,18 @@
             "type": "string"
           },
           "origin": {
-            "anyOf": [
-              {
-                "type": "string"
-              },
-              {
-                "type": "null"
-              }
-            ],
-            "title": "Origin"
+            "nullable": true,
+            "title": "Origin",
+            "type": "string"
           },
           "price": {
             "title": "Price",
             "type": "number"
           },
           "roast_level": {
-            "anyOf": [
-              {
-                "type": "string"
-              },
-              {
-                "type": "null"
-              }
-            ],
-            "title": "Roast Level"
+            "nullable": true,
+            "title": "Roast Level",
+            "type": "string"
           },
           "slug": {
             "title": "Slug",
@@ -825,41 +759,23 @@
       "RecommendRequest": {
         "properties": {
           "messages": {
-            "anyOf": [
-              {
-                "items": {
-                  "$ref": "#/components/schemas/ChatMessage"
-                },
-                "type": "array"
-              },
-              {
-                "type": "null"
-              }
-            ],
-            "title": "Messages"
+            "items": {
+              "$ref": "#/components/schemas/ChatMessage"
+            },
+            "nullable": true,
+            "title": "Messages",
+            "type": "array"
           },
           "preferences": {
-            "anyOf": [
-              {
-                "additionalProperties": true,
-                "type": "object"
-              },
-              {
-                "type": "null"
-              }
-            ],
-            "title": "Preferences"
+            "additionalProperties": true,
+            "nullable": true,
+            "title": "Preferences",
+            "type": "object"
           },
           "prompt": {
-            "anyOf": [
-              {
-                "type": "string"
-              },
-              {
-                "type": "null"
-              }
-            ],
-            "title": "Prompt"
+            "nullable": true,
+            "title": "Prompt",
+            "type": "string"
           }
         },
         "title": "RecommendRequest",
@@ -989,15 +905,9 @@
       "TurnstileVerifyRequest": {
         "properties": {
           "action": {
-            "anyOf": [
-              {
-                "type": "string"
-              },
-              {
-                "type": "null"
-              }
-            ],
-            "title": "Action"
+            "nullable": true,
+            "title": "Action",
+            "type": "string"
           },
           "token": {
             "title": "Token",
@@ -1103,7 +1013,7 @@
     "title": "Single Origin API",
     "version": "0.1.0"
   },
-  "openapi": "3.1.0",
+  "openapi": "3.0.3",
   "paths": {
     "/admin": {
       "post": {
@@ -1487,15 +1397,9 @@
             "name": "authorization",
             "required": false,
             "schema": {
-              "anyOf": [
-                {
-                  "type": "string"
-                },
-                {
-                  "type": "null"
-                }
-              ],
-              "title": "Authorization"
+              "nullable": true,
+              "title": "Authorization",
+              "type": "string"
             }
           }
         ],
@@ -1534,15 +1438,9 @@
             "name": "authorization",
             "required": false,
             "schema": {
-              "anyOf": [
-                {
-                  "type": "string"
-                },
-                {
-                  "type": "null"
-                }
-              ],
-              "title": "Authorization"
+              "nullable": true,
+              "title": "Authorization",
+              "type": "string"
             }
           }
         ],
@@ -1581,15 +1479,9 @@
             "name": "authorization",
             "required": false,
             "schema": {
-              "anyOf": [
-                {
-                  "type": "string"
-                },
-                {
-                  "type": "null"
-                }
-              ],
-              "title": "Authorization"
+              "nullable": true,
+              "title": "Authorization",
+              "type": "string"
             }
           }
         ],
@@ -1637,15 +1529,9 @@
             "name": "authorization",
             "required": false,
             "schema": {
-              "anyOf": [
-                {
-                  "type": "string"
-                },
-                {
-                  "type": "null"
-                }
-              ],
-              "title": "Authorization"
+              "nullable": true,
+              "title": "Authorization",
+              "type": "string"
             }
           }
         ],
@@ -1694,15 +1580,9 @@
             "name": "authorization",
             "required": false,
             "schema": {
-              "anyOf": [
-                {
-                  "type": "string"
-                },
-                {
-                  "type": "null"
-                }
-              ],
-              "title": "Authorization"
+              "nullable": true,
+              "title": "Authorization",
+              "type": "string"
             }
           }
         ],
@@ -1739,15 +1619,9 @@
             "name": "authorization",
             "required": false,
             "schema": {
-              "anyOf": [
-                {
-                  "type": "string"
-                },
-                {
-                  "type": "null"
-                }
-              ],
-              "title": "Authorization"
+              "nullable": true,
+              "title": "Authorization",
+              "type": "string"
             }
           }
         ],
@@ -1805,15 +1679,9 @@
             "name": "authorization",
             "required": false,
             "schema": {
-              "anyOf": [
-                {
-                  "type": "string"
-                },
-                {
-                  "type": "null"
-                }
-              ],
-              "title": "Authorization"
+              "nullable": true,
+              "title": "Authorization",
+              "type": "string"
             }
           }
         ],
@@ -1859,15 +1727,9 @@
             "name": "authorization",
             "required": false,
             "schema": {
-              "anyOf": [
-                {
-                  "type": "string"
-                },
-                {
-                  "type": "null"
-                }
-              ],
-              "title": "Authorization"
+              "nullable": true,
+              "title": "Authorization",
+              "type": "string"
             }
           }
         ],
@@ -1916,15 +1778,9 @@
             "name": "authorization",
             "required": false,
             "schema": {
-              "anyOf": [
-                {
-                  "type": "string"
-                },
-                {
-                  "type": "null"
-                }
-              ],
-              "title": "Authorization"
+              "nullable": true,
+              "title": "Authorization",
+              "type": "string"
             }
           }
         ],
@@ -1972,15 +1828,9 @@
             "name": "authorization",
             "required": false,
             "schema": {
-              "anyOf": [
-                {
-                  "type": "string"
-                },
-                {
-                  "type": "null"
-                }
-              ],
-              "title": "Authorization"
+              "nullable": true,
+              "title": "Authorization",
+              "type": "string"
             }
           }
         ],
@@ -2029,15 +1879,9 @@
             "name": "authorization",
             "required": false,
             "schema": {
-              "anyOf": [
-                {
-                  "type": "string"
-                },
-                {
-                  "type": "null"
-                }
-              ],
-              "title": "Authorization"
+              "nullable": true,
+              "title": "Authorization",
+              "type": "string"
             }
           }
         ],
@@ -2074,15 +1918,9 @@
             "name": "authorization",
             "required": false,
             "schema": {
-              "anyOf": [
-                {
-                  "type": "string"
-                },
-                {
-                  "type": "null"
-                }
-              ],
-              "title": "Authorization"
+              "nullable": true,
+              "title": "Authorization",
+              "type": "string"
             }
           }
         ],
@@ -2140,15 +1978,9 @@
             "name": "authorization",
             "required": false,
             "schema": {
-              "anyOf": [
-                {
-                  "type": "string"
-                },
-                {
-                  "type": "null"
-                }
-              ],
-              "title": "Authorization"
+              "nullable": true,
+              "title": "Authorization",
+              "type": "string"
             }
           }
         ],
@@ -2194,15 +2026,9 @@
             "name": "authorization",
             "required": false,
             "schema": {
-              "anyOf": [
-                {
-                  "type": "string"
-                },
-                {
-                  "type": "null"
-                }
-              ],
-              "title": "Authorization"
+              "nullable": true,
+              "title": "Authorization",
+              "type": "string"
             }
           }
         ],
@@ -2946,15 +2772,9 @@
             "name": "authorization",
             "required": false,
             "schema": {
-              "anyOf": [
-                {
-                  "type": "string"
-                },
-                {
-                  "type": "null"
-                }
-              ],
-              "title": "Authorization"
+              "nullable": true,
+              "title": "Authorization",
+              "type": "string"
             }
           }
         ],
@@ -3005,15 +2825,9 @@
             "name": "origin",
             "required": false,
             "schema": {
-              "anyOf": [
-                {
-                  "type": "string"
-                },
-                {
-                  "type": "null"
-                }
-              ],
-              "title": "Origin"
+              "nullable": true,
+              "title": "Origin",
+              "type": "string"
             }
           },
           {
@@ -3021,15 +2835,9 @@
             "name": "roast",
             "required": false,
             "schema": {
-              "anyOf": [
-                {
-                  "type": "string"
-                },
-                {
-                  "type": "null"
-                }
-              ],
-              "title": "Roast"
+              "nullable": true,
+              "title": "Roast",
+              "type": "string"
             }
           },
           {
@@ -3037,15 +2845,9 @@
             "name": "category",
             "required": false,
             "schema": {
-              "anyOf": [
-                {
-                  "type": "string"
-                },
-                {
-                  "type": "null"
-                }
-              ],
-              "title": "Category"
+              "nullable": true,
+              "title": "Category",
+              "type": "string"
             }
           }
         ],
@@ -3088,15 +2890,9 @@
             "name": "authorization",
             "required": false,
             "schema": {
-              "anyOf": [
-                {
-                  "type": "string"
-                },
-                {
-                  "type": "null"
-                }
-              ],
-              "title": "Authorization"
+              "nullable": true,
+              "title": "Authorization",
+              "type": "string"
             }
           }
         ],
@@ -3167,15 +2963,9 @@
             "name": "authorization",
             "required": false,
             "schema": {
-              "anyOf": [
-                {
-                  "type": "string"
-                },
-                {
-                  "type": "null"
-                }
-              ],
-              "title": "Authorization"
+              "nullable": true,
+              "title": "Authorization",
+              "type": "string"
             }
           }
         ],
@@ -3273,15 +3063,9 @@
             "name": "authorization",
             "required": false,
             "schema": {
-              "anyOf": [
-                {
-                  "type": "string"
-                },
-                {
-                  "type": "null"
-                }
-              ],
-              "title": "Authorization"
+              "nullable": true,
+              "title": "Authorization",
+              "type": "string"
             }
           }
         ],
@@ -4683,6 +4467,11 @@
       }
     }
   },
+  "servers": [
+    {
+      "url": "https://api.lab.sxplab.com"
+    }
+  ],
   "tags": [
     {
       "description": "Token issuance, registration, refresh, and JWKS endpoints.",

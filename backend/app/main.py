@@ -1,9 +1,12 @@
-from fastapi import FastAPI
+from fastapi import FastAPI, Request
 from fastapi.middleware.cors import CORSMiddleware
-from fastapi.responses import RedirectResponse
+from fastapi.openapi.docs import get_redoc_html, get_swagger_ui_html
+from fastapi.openapi.utils import get_openapi
+from fastapi.responses import JSONResponse, RedirectResponse
 
 from app.config import settings
 from app.db import init_db, seed_db
+from app.openapi_compat import to_cloudflare_compatible
 from app.routes.account import router as account_router
 from app.routes.admin import router as admin_router
 from app.routes.ai import router as ai_router
@@ -42,6 +45,47 @@ OPENAPI_TAGS = [
 ]
 
 
+# Placeholder used when no real public URL is available (dev shells, the
+# committed openapi.json artifact, etc.). Cloudflare requires an absolute URL
+# but does not require it to resolve at upload time, so the placeholder keeps
+# the spec structurally valid for offline tooling. The HTTP `/openapi.json`
+# route substitutes the real hostname when handling a request — see
+# `openapi_endpoint` below.
+DEFAULT_API_PUBLIC_URL = "https://api.lab.sxplab.com"
+
+OPENAPI_URL = "/openapi.json"
+DOCS_URL = "/docs"
+REDOC_URL = "/redoc"
+
+# Schemes we accept when reading X-Forwarded-Proto to build the OpenAPI
+# ``servers`` URL. Anything else (``javascript``, ``data``, ``file``, ...) is
+# replaced with ``https`` so a caller who can spoof headers cannot poison
+# the served spec into pointing at an attacker-controlled URI scheme.
+_SAFE_SCHEMES = {"http", "https"}
+
+
+def _is_safe_host(host: str) -> bool:
+    """Reject obviously malformed or injected ``Host``/``X-Forwarded-Host`` values.
+
+    The bar here is intentionally low: we only need to ensure the value is a
+    plausible hostname (or hostname:port) before splicing it into a URL. A
+    real RFC 3986 host parser is overkill for the lab origin and would
+    introduce a dependency. Reject anything that contains structural URL
+    characters (``/``, ``@``, ``?``, ``#``), whitespace, or control bytes.
+    Empty values are rejected so the caller falls through to the placeholder.
+    """
+    if not host:
+        return False
+    if any(ch in host for ch in "/@?# \t\r\n"):
+        return False
+    return True
+
+
+# Disable FastAPI's built-in OpenAPI / Swagger UI / ReDoc routes so we can
+# register our own. We still serve all three URLs at the same paths the
+# defaults use, but the `/openapi.json` handler now resolves the public
+# server URL with a three-step fallback chain (env var → request Host →
+# hard-coded placeholder) and the docs HTML is rewired to that endpoint.
 app = FastAPI(
     title=settings.app_name,
     version=settings.app_version,
@@ -51,7 +95,126 @@ app = FastAPI(
         "for validation, hardening, and detection exercises."
     ),
     openapi_tags=OPENAPI_TAGS,
+    openapi_url=None,
+    docs_url=None,
+    redoc_url=None,
 )
+
+
+def _build_openapi(server_url: str) -> dict:
+    """Build the OpenAPI document with the given absolute server URL.
+
+    Always returns a Cloudflare API Shield-compatible OAS 3.0.3 document.
+    See ``app.openapi_compat`` for the conversion details. The result is
+    deterministic for a given ``(route set, server_url)`` pair, which keeps
+    the committed ``docs/openapi/single-origin.openapi.json`` artifact
+    stable against the CI drift check.
+    """
+    raw = get_openapi(
+        title=app.title,
+        version=app.version,
+        description=app.description,
+        routes=app.routes,
+        tags=OPENAPI_TAGS,
+    )
+    return to_cloudflare_compatible(raw, server_url=server_url)
+
+
+def custom_openapi() -> dict:
+    """Override of ``app.openapi()`` used by tests and ``scripts/export-openapi.py``.
+
+    Returns a Cloudflare-compatible spec keyed off the env-derived public URL
+    (see :meth:`app.config.Settings.derive_api_public_url`) and caches the
+    result on ``app.openapi_schema``. The committed OpenAPI artifact and the
+    dev-shell tooling both go through this code path, so they are always in
+    sync with what production pods serve.
+
+    The HTTP ``/openapi.json`` route (``openapi_endpoint``) bypasses this
+    cache so it can also use the request ``Host`` header when the env var
+    is not derivable.
+    """
+    if app.openapi_schema:
+        return app.openapi_schema
+    server_url = settings.derive_api_public_url() or DEFAULT_API_PUBLIC_URL
+    app.openapi_schema = _build_openapi(server_url)
+    return app.openapi_schema
+
+
+app.openapi = custom_openapi
+
+
+def _resolve_runtime_server_url(request: Request) -> str:
+    """Resolve the absolute server URL to advertise in ``/openapi.json``.
+
+    Three-step fallback chain:
+
+    1. ``settings.derive_api_public_url()`` — the env-var path. Production
+       lab pods always hit this branch because CML provisions
+       ``CHECKOUT_SDK_EXFIL_URL`` with the pod slug embedded.
+    2. The inbound request's scheme + host. ``cloudflared`` populates
+       ``X-Forwarded-Proto`` / ``X-Forwarded-Host`` correctly, so this
+       matches what the learner pasted into Cloudflare API Shield as long
+       as Single Origin sits behind any reasonable reverse proxy.
+    3. The hard-coded placeholder. Reached only if both above fail (for
+       example, a unit test with no Host header).
+
+    The committed OpenAPI artifact uses path 1 (or 3 in the absence of the
+    env var during artifact regeneration), so the artifact is deterministic
+    and the CI drift check is stable.
+    """
+    env_url = settings.derive_api_public_url()
+    if env_url:
+        return env_url
+
+    # Step 2: derive from request headers. Both header values flow into the
+    # ``servers`` URL of the served OpenAPI document, so they need defensive
+    # validation. A caller who can reach the origin directly (the lab/local
+    # trust posture this branch is designed for) could otherwise send
+    # ``X-Forwarded-Host: evil.example`` plus a custom proto and have
+    # auto-generated client code (``openapi-generator``, Postman import,
+    # etc.) point at an attacker-controlled host. The poisoned value lives
+    # only in JSON, so this is not an XSS or open-redirect vector — but it
+    # is worth blocking at the spec source.
+    host = (
+        request.headers.get("x-forwarded-host")
+        or request.headers.get("host")
+        or ""
+    ).strip()
+    # X-Forwarded-Proto can arrive as a comma-separated list when traffic
+    # crosses multiple proxies (RFC 7239, nginx, HAProxy, AWS ALB). Take
+    # the leftmost token (the most recent hop's view).
+    raw_proto = (
+        request.headers.get("x-forwarded-proto") or request.url.scheme or "https"
+    ).split(",")[0].strip().lower()
+    if _is_safe_host(host):
+        scheme = raw_proto if raw_proto in _SAFE_SCHEMES else "https"
+        return f"{scheme}://{host}"
+
+    return DEFAULT_API_PUBLIC_URL
+
+
+@app.get(OPENAPI_URL, include_in_schema=False)
+async def openapi_endpoint(request: Request) -> JSONResponse:
+    """Serve the OpenAPI document with a request-aware ``servers`` array.
+
+    This handler computes the spec on every request rather than caching on
+    ``app.openapi_schema`` — the per-request cost is negligible (the spec
+    is a few KB and the conversion is pure Python over a deterministic
+    structure) and it lets the ``servers`` URL track the request's host in
+    deployments where the env-var path does not apply.
+    """
+    server_url = _resolve_runtime_server_url(request)
+    return JSONResponse(_build_openapi(server_url))
+
+
+@app.get(DOCS_URL, include_in_schema=False)
+async def swagger_ui_html() -> object:
+    return get_swagger_ui_html(openapi_url=OPENAPI_URL, title=f"{app.title} — Swagger UI")
+
+
+@app.get(REDOC_URL, include_in_schema=False)
+async def redoc_html() -> object:
+    return get_redoc_html(openapi_url=OPENAPI_URL, title=f"{app.title} — ReDoc")
 
 app.add_middleware(
     CORSMiddleware,

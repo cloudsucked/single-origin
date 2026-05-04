@@ -509,8 +509,8 @@ The route does not mount Strawberry's `GraphQLRouter` — it executes queries ag
 
 | Method | Path | Description |
 |--------|------|-------------|
-| `GET` | `/openapi.json` | Auto-generated OpenAPI 3.0 spec (FastAPI native) |
-| `GET` | `/api-docs` | Swagger UI (interactive API documentation) |
+| `GET` | `/openapi.json` | OpenAPI 3.0.3 spec (FastAPI native, post-processed for Cloudflare API Shield compatibility) |
+| `GET` | `/docs` | Swagger UI (interactive API documentation; `/api-docs` redirects here) |
 | `GET` | `/health` | Health check (`{"status": "healthy", "version": "1.0.0"}`) |
 | `GET` | `/robots.txt` | Basic robots file (can be overridden by Cloudflare Managed robots.txt) |
 | `GET` | `/favicon.ico` | Site favicon |
@@ -768,15 +768,28 @@ For API Shield's Authentication Posture feature, endpoints have varying auth pat
 
 ## OpenAPI Specification
 
-FastAPI auto-generates the OpenAPI 3.0 spec at `/openapi.json`. The spec should be downloadable and uploadable to API Shield for Schema Validation. It includes:
+FastAPI auto-generates the spec at `/openapi.json` and Single Origin transforms it into the OAS 3.0.3 form Cloudflare API Shield Schema validation accepts. The conversion runs on every `/openapi.json` request (and on every `scripts/export-openapi.py` invocation) so the served and committed specs are always Cloudflare-compatible. See `backend/app/openapi_compat.py` for the implementation.
+
+The transformation does three things:
+
+- Flattens FastAPI / Pydantic v2 nullable patterns (`{"anyOf": [{"type": "X"}, {"type": "null"}]}`) into `{"type": "X", "nullable": true}`. Cloudflare rejects the OAS 3.1 form with `code: 40028, invalid or missing parameter type`.
+- Forces the document version to `openapi: 3.0.3`. Cloudflare only accepts the 3.0 line.
+- Writes a root-level `servers` array with an absolute URL. Cloudflare rejects specs without one with `code: 50015, failed to construct endpoint URLs`.
+
+The `servers` URL is resolved with a three-step fallback chain:
+
+1. Derived from the existing `CHECKOUT_SDK_EXFIL_URL` env var (the production lab pod path — CML already plumbs the slug into this var, no additional infra change required). The hostname becomes `https://api.{slug}.sxplab.com`.
+2. Built from the inbound request's `X-Forwarded-Host` / `Host` headers, with defensive validation that rejects path separators, userinfo segments, and unsafe URI schemes.
+3. The hard-coded placeholder `https://api.lab.sxplab.com`. Reached only by the committed artifact during offline regeneration and by tests that supply no host.
+
+The contents of the spec include:
 
 - All REST API endpoints with methods, paths, parameters
 - Request body schemas (JSON Schema format)
 - Response schemas
 - Authentication requirements (JWT Bearer)
-- Server URL uses the lab slug: `https://{SLUG}.sxplab.com`
 
-> **Lab exercise:** Learners download the auto-generated spec, upload it to API Shield, enable Schema Validation, then send malformed requests to see them blocked.
+> **Lab exercise:** Learners download the auto-generated spec, upload it to API Shield, enable Schema Validation, then send malformed requests to see them blocked. No conversion step is required — the pod serves a Cloudflare-ready spec directly.
 
 ---
 
