@@ -11,15 +11,14 @@ include:
       runOnMR: true
       stage: review
   
-  - component: $CI_SERVER_FQDN/cloudflare/ci/pnpm/run@~latest
+  - component: $CI_SERVER_FQDN/cloudflare/ci/javascript/run@~latest
     inputs:
       stage: test
       jobPrefix: "frontend"
       runOnMR: true
       runOnBranches: ^(main)$
       workDir: ./frontend
-      PNPM_VERSION: "latest-10"
-      PNPM_RUN_TARGET: "check"
+      RUN_TARGET: "check"
 
   - component: $CI_SERVER_FQDN/cloudflare/ci/python/test@~latest
     inputs:
