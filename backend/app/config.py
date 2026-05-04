@@ -1,4 +1,15 @@
+from __future__ import annotations
+
+import re
+from urllib.parse import urlparse
+
 from pydantic_settings import BaseSettings, SettingsConfigDict
+
+# Recognises the lab-pod hostname pattern used by every CML-provisioned pod.
+# Matches the leftmost subdomain of "<role>.<slug>.sxplab.com" so we can
+# substitute "api" for "<role>" and reuse the slug across other lab URLs
+# without needing CML to plumb a second env var.
+_SXPLAB_HOST_RE = re.compile(r"^(?P<role>[^.]+)\.(?P<slug>[^.]+)\.sxplab\.com$")
 
 
 class Settings(BaseSettings):
@@ -49,6 +60,38 @@ class Settings(BaseSettings):
     ai_model: str = "@cf/meta/llama-3.1-8b-instruct"
 
     model_config = SettingsConfigDict(env_file=".env", env_file_encoding="utf-8")
+
+    def derive_api_public_url(self) -> str | None:
+        """Best-effort derivation of the public API base URL from existing env.
+
+        Cloudflare API Shield Schema validation requires an absolute server
+        URL in the OpenAPI ``servers`` array. Rather than asking the CML
+        ``generic-origin`` template to plumb a second env var, we piggyback
+        on ``CHECKOUT_SDK_EXFIL_URL`` which already carries the pod slug
+        (e.g. ``https://exfil.adaptive-database.sxplab.com/skim``). The API
+        is reached at the same slug under the ``api`` subdomain
+        (``https://api.adaptive-database.sxplab.com``), so we swap the
+        leftmost subdomain.
+
+        Returns ``None`` when:
+        - the env var is unset,
+        - the value still contains the literal ``{SLUG}`` placeholder, or
+        - the host does not match the standard ``<role>.<slug>.sxplab.com``
+          pattern (dev shells, custom deployments).
+
+        In any of those cases the caller should fall back to deriving the
+        URL from the inbound request ``Host`` header.
+        """
+        url = self.checkout_sdk_exfil_url
+        if not url or "{SLUG}" in url:
+            return None
+        parsed = urlparse(url)
+        if not parsed.scheme or not parsed.hostname:
+            return None
+        match = _SXPLAB_HOST_RE.match(parsed.hostname)
+        if not match:
+            return None
+        return f"{parsed.scheme}://api.{match.group('slug')}.sxplab.com"
 
 
 settings = Settings()
