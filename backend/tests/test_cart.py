@@ -55,6 +55,9 @@ def test_cart_sessions_are_capped(monkeypatch) -> None:
     assert "a" not in cart_module._CART
     assert set(cart_module._CART) == {"demo", "c", "d"}
 
+    response = client.get("/api/v1/cart?session=d")
+    assert response.json()["items"] == [{"product_id": 1, "quantity": 1, "name": "", "price": 0.0}]
+
 
 def test_cart_sessions_expire(monkeypatch) -> None:
     monkeypatch.setattr(settings, "cart_ttl_seconds", 1)
@@ -64,3 +67,18 @@ def test_cart_sessions_expire(monkeypatch) -> None:
 
     assert "old" not in cart_module._CART
     assert "demo" in cart_module._CART
+
+
+def test_clear_demo_cart_preserves_demo_session() -> None:
+    response = client.post(
+        "/api/v1/cart/items",
+        json={"product_id": 1, "quantity": 1},
+    )
+    assert response.status_code == 200
+
+    response = client.delete("/api/v1/cart")
+
+    assert response.status_code == 200
+    assert response.json() == {"session": "demo", "items": []}
+    assert "demo" in cart_module._CART
+    assert cart_module._CART["demo"].items == []

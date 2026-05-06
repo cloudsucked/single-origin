@@ -10,8 +10,9 @@ Single Origin is a synthetic specialty-coffee e-commerce app used as the origin 
 
 ### Runtime
 
-- `pytest tests/` from `backend/` runs the backend test suite (currently 69 tests).
+- `pytest tests/` from `backend/` runs the backend test suite.
 - `scripts/export-openapi.py` regenerates `docs/openapi/single-origin.openapi.json`; the `backend-openapi-test` CI job fails if the committed artifact drifts.
+- `scripts/prune-db.sh` trims traffic-generated SQLite rows while preserving seed data. Flags: `--quiet` (suppress `[ok]` lines), `--vacuum` (reclaim disk space after pruning; needs an exclusive SQLite lock).
 - `scripts/reset-lab.sh` drops and re-seeds `single_origin.db`, then restarts the backend. Flags: `--no-restart` (skip service restart in dev shells), `--quiet` (suppress `[ok]` lines).
 - `scripts/smoke-test.sh` hits every endpoint the 9 Implement AppSec courses depend on. Flag: `--verbose`. Exits non-zero on the first failure.
 
@@ -24,6 +25,9 @@ Critical env vars (see `backend/app/config.py`):
 - `AI_GATEWAY_TOKEN` — bearer sent upstream as `cf-aig-authorization: Bearer <token>`.
 - `AI_MODEL` — default `@cf/meta/llama-3.1-8b-instruct`. Overrides any client-sent `model` alias so lab aliases like `brew-assistant-v1` work transparently.
 - `CHECKOUT_SDK_EXFIL_URL` — default `https://exfil.{SLUG}.sxplab.com/skim`. Controls the fetch target of the `v=1.2.4` compromised variant of `/js/checkout-sdk.js` (Page Shield supply-chain simulation).
+- `CART_TTL_SECONDS` — default `3600`. Maximum idle age for non-demo in-memory cart sessions before pruning.
+- `CART_MAX_SESSIONS` — default `200`. Maximum in-memory cart sessions retained by the backend.
+- `CART_MAX_ITEMS_PER_SESSION` — default `25`. Maximum items retained per in-memory cart session.
 - `ENFORCE_TURNSTILE` — when `true`, `/login`, `/register`, `/contact/submit`, and `/checkout/submit` validate `cf-turnstile-response` tokens with Siteverify.
 - `LAB_JWT_PRIVATE_KEY` — when set, the app switches from HS256 to RS256 JWT signing and serves a matching JWKS endpoint (for API Shield JWT Validation exercises).
 - `SEED_DEMO_PASSWORD`, `SEED_ADMIN_PASSWORD`, `SEED_WHOLESALE_PASSWORD`, `SEED_TEST_USERS_PASSWORD` — seed credentials consumed by `seed_db.py`.

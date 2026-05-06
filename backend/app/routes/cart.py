@@ -59,9 +59,18 @@ def _get_existing_cart(session: str) -> CartState | None:
 def _get_or_create_cart(session: str) -> CartState:
     cart = _get_existing_cart(session)
     if cart is None:
+        _prune_carts()
+        max_sessions = max(settings.cart_max_sessions, 1)
+        excess = len(_CART) - max_sessions + 1
+        if excess > 0:
+            oldest_sessions = sorted(
+                (entry for entry in _CART.items() if entry[0] != "demo"),
+                key=lambda entry: entry[1].updated_at,
+            )
+            for old_session, _ in oldest_sessions[:excess]:
+                del _CART[old_session]
         cart = CartState()
         _CART[session] = cart
-        _prune_carts()
     return cart
 
 
@@ -104,5 +113,8 @@ async def remove_cart_item(item_id: int, session: str = "demo"):
 
 @router.delete("")
 async def clear_cart(session: str = "demo"):
-    _CART.pop(session, None)
+    if session == "demo":
+        _CART["demo"] = CartState()
+    else:
+        _CART.pop(session, None)
     return {"session": session, "items": []}

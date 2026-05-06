@@ -57,7 +57,6 @@ while [[ $# -gt 0 ]]; do
 done
 
 ok()   { if ! $QUIET; then echo "[ok]   $*"; fi; }
-warn() { echo "[warn] $*" >&2; }
 fail() { echo "[fail] $*" >&2; exit 1; }
 
 cd "$BACKEND_DIR"
@@ -67,7 +66,7 @@ cd "$BACKEND_DIR"
 # ---------------------------------------------------------------------------
 # Prune (Python does the heavy lifting so we don't parse structured data in bash)
 # ---------------------------------------------------------------------------
-SUMMARY=$(python3 - "$VACUUM" <<'PY'
+if ! SUMMARY=$(python3 - "$VACUUM" <<'PY'
 import sqlite3
 import sys
 
@@ -134,13 +133,14 @@ after = {
 }
 
 # Reclaim disk space if requested
-vacuum_ok = False
+vacuum_status = "skipped"
 if should_vacuum:
     try:
         cur.execute("VACUUM")
-        vacuum_ok = True
+        vacuum_status = "ok"
     except sqlite3.OperationalError as e:
         print(f"vacuum_error={e}", file=sys.stderr)
+        vacuum_status = "failed"
 
 # Emit a machine-readable summary
 parts = []
@@ -149,14 +149,14 @@ for key in ("orders", "contacts", "audit_logs", "subscriptions", "users"):
     a = after[key]
     removed = b - a if b >= 0 and a >= 0 else -1
     parts.append(f"{key}_removed={removed}")
-parts.append(f"vacuum={'ok' if vacuum_ok else 'skipped'}")
+parts.append(f"vacuum={vacuum_status}")
 print(" ".join(parts))
 
 conn.close()
 PY
-)
-
-[[ $? -eq 0 ]] || fail "prune python block failed"
+); then
+    fail "prune python block failed"
+fi
 
 ok "database pruned"
 echo "Prune complete. $SUMMARY"

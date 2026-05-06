@@ -99,6 +99,7 @@ CI also enforces this with `backend/tests/test_openapi_artifact.py`.
   - `TURNSTILE_SECRET_KEY`
   - `TURNSTILE_EXPECTED_HOSTNAME`
   - `ENFORCE_TURNSTILE` (`false` by default for learner exercises)
+  - Optional cart guardrails: `CART_TTL_SECONDS` (`3600`), `CART_MAX_SESSIONS` (`200`), `CART_MAX_ITEMS_PER_SESSION` (`25`)
   - Optional seeded login passwords: `SEED_DEMO_PASSWORD`, `SEED_WHOLESALE_PASSWORD`, `SEED_ADMIN_PASSWORD`, `SEED_TEST_USERS_PASSWORD`
   - Optional lab JWT key: `LAB_JWT_PRIVATE_KEY` — when set, switches token signing from HS256 to RS256 using the provided RSA-2048 PEM key (with `\n` as literal escape sequences). The JWKS endpoint at `/api/v1/auth/.well-known/jwks.json` will serve the corresponding public key. Leave unset for local development (defaults to HS256).
 
@@ -126,6 +127,18 @@ Both remotes are configured in this repo:
 
 ```bash
 ./scripts/reset-lab.sh
+```
+
+- Prune traffic-generated database rows while preserving seed data:
+
+```bash
+./scripts/prune-db.sh --quiet
+```
+
+- Reclaim SQLite file space after pruning when the backend is quiet:
+
+```bash
+./scripts/prune-db.sh --quiet --vacuum
 ```
 
 - Full operations runbook: `docs/runbooks/lab-operations.md`
