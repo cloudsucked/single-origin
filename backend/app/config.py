@@ -40,6 +40,13 @@ class Settings(BaseSettings):
     seed_admin_password: str = ""
     seed_test_users_password: str = ""
 
+    # In-memory cart guardrails. The lab traffic generator may use many
+    # synthetic sessions, so carts must be bounded even though they are not
+    # persisted in SQLite.
+    cart_ttl_seconds: int = 3600
+    cart_max_sessions: int = 200
+    cart_max_items_per_session: int = 25
+
     # Page Shield checkout-sdk compromised-variant exfil target. The app serves
     # two variants from `/js/checkout-sdk.js`: `v=1.2.3` (safe) and `v=1.2.4`
     # (compromised, exfils cart to this URL). Default is a lab-zone subdomain
