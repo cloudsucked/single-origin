@@ -6,7 +6,7 @@ This plan translates the canonical requirements in `docs/specs/single-origin-des
 
 - Build a thin, end-to-end MVP first (all key routes + flows present, minimal business depth).
 - Run the learner lab on a VM-native setup so students can directly edit frontend and backend.
-- Keep containerization as a secondary packaging path for internal reproducibility, not the primary learner runtime.
+- Keep deployment packaging outside the application spec; lab templates choose how to run the services.
 
 ## Runtime Model for Labs
 
@@ -20,7 +20,6 @@ This plan translates the canonical requirements in `docs/specs/single-origin-des
 - `frontend/` (SvelteKit)
 - `backend/` (FastAPI + Strawberry)
 - `scripts/` (lab helper scripts)
-- `infra/` (optional container + deployment assets)
 - `docs/` (specs, runbooks, learner troubleshooting)
 
 Exit criteria:

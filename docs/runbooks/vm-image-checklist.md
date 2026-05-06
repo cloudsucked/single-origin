@@ -11,24 +11,24 @@ Use this list when baking or validating a learner VM image.
 
 ### cloudflared ingress rules
 
-The cloudflared configuration must route all four lab hostnames to the same origin container on port 8080. A minimal `config.yml` fragment:
+The cloudflared configuration must route lab hostnames to the services exposed by that lab deployment. For the VM-native learner runtime, route browser-facing hostnames to the frontend and API-oriented hostnames to the backend. A minimal `config.yml` fragment:
 
 ```yaml
 tunnel: <TUNNEL_UUID>
 credentials-file: /etc/cloudflared/<TUNNEL_UUID>.json
 ingress:
   - hostname: www.${SLUG}.sxplab.com
-    service: http://localhost:8080
+    service: http://localhost:5173
   - hostname: api.${SLUG}.sxplab.com
-    service: http://localhost:8080
+    service: http://localhost:8000
   - hostname: wholesale.${SLUG}.sxplab.com
-    service: http://localhost:8080
+    service: http://localhost:8000
   - hostname: iot.${SLUG}.sxplab.com
-    service: http://localhost:8080
+    service: http://localhost:8000
   - service: http_status:404
 ```
 
-DNS records for all four hostnames must exist in the lab zone (orange-clouded CNAMEs pointing at the tunnel). The `wholesale.` and `iot.` hostnames carry the same application content — the CML blueprint enforces mTLS at the edge on those two hostnames, so requests without a valid client certificate are rejected before reaching the origin. This is the dependency behind Implement mTLS Task 3 (`wholesale.` hostname enablement) and Task 7 (`iot.` certificate pinning).
+DNS records for all four hostnames must exist in the lab zone (orange-clouded CNAMEs pointing at the tunnel). The `wholesale.` and `iot.` hostnames expose the same backend application surface as `api.`; the CML blueprint enforces mTLS at the edge on those two hostnames, so requests without a valid client certificate are rejected before reaching the origin. This is the dependency behind Implement mTLS Task 3 (`wholesale.` hostname enablement) and Task 7 (`iot.` certificate pinning).
 
 ## Required Files
 

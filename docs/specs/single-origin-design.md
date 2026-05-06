@@ -34,7 +34,6 @@ The company is growing fast — their website handles product browsing, subscrip
 | **LLM endpoint** | Mock LLM | FastAPI endpoint returning canned responses but accepting real prompt formats (for Firewall for AI) |
 | **Database** | SQLite | Zero-config, single-file, perfect for ephemeral lab pods |
 | **Auth** | JWT (python-jose) | Standard JWT with configurable claims for API Shield session identifiers |
-| **Containerization** | Docker | Single container with both frontend and backend, runs behind cloudflared tunnel |
 
 ### Rendering Strategy
 
@@ -56,9 +55,9 @@ The application should be accessible on multiple subdomains to support per-hostn
 | `wholesale.{SLUG}.sxplab.com` | Wholesale partner API — mTLS-protected |
 | `iot.{SLUG}.sxplab.com` | IoT sensor data ingestion — mTLS-protected |
 
-All subdomains route to the same application; the hostname is used by Cloudflare for per-hostname policy enforcement.
+All subdomains route to the same application surface; the hostname is used by Cloudflare for per-hostname policy enforcement.
 
-**Implementation note (ingress):** the CML `generic-origin` infrastructure template is responsible for provisioning all four hostnames. Both DNS records (orange-clouded `CNAME` entries in the lab zone) and the `cloudflared` ingress rules must include `www.`, `api.`, `wholesale.`, and `iot.`, all pointing at the single origin container on port 8080. The app itself performs no hostname-based routing — every path is reachable on every hostname, and the edge (WAF rules, mTLS enforcement) is the filter. See `docs/runbooks/vm-image-checklist.md` for the list that CML bake/validation checks.
+**Implementation note (ingress):** lab infrastructure is responsible for provisioning the hostnames, DNS records, and any tunnel or load-balancer rules. The Single Origin app itself performs no hostname-based routing; the edge configuration (WAF rules, mTLS enforcement) is the filter.
 
 ---
 
@@ -856,35 +855,16 @@ The 50 test users are pre-seeded with varying order histories and subscription s
 
 ---
 
-## Docker Deployment
+## Runtime Expectations
 
-The application runs as a single Docker container:
+Single Origin is deployment-agnostic. The repository defines the application behavior and local development scripts; lab-specific infrastructure decides how the app runs in each lab environment.
 
-```dockerfile
-# Multi-stage build
-FROM node:20-slim AS frontend
-WORKDIR /app/frontend
-COPY frontend/ .
-RUN npm ci && npm run build
+Any lab deployment must provide:
 
-FROM python:3.12-slim AS backend
-WORKDIR /app
-COPY backend/ .
-COPY --from=frontend /app/frontend/build ./static
-RUN pip install --no-cache-dir -r requirements.txt
-
-# Pre-seed SQLite database
-RUN python seed_db.py
-
-EXPOSE 8080
-CMD ["uvicorn", "main:app", "--host", "0.0.0.0", "--port", "8080"]
-```
-
-**In the CML lab pod:**
-- The container runs on port 8080
-- `cloudflared` tunnel connects it to Cloudflare's network
-- The zone `{SLUG}.sxplab.com` is orange-clouded through Cloudflare
-- All subdomains (www, api, wholesale, iot) route to the same container
+- A running FastAPI backend with the API, GraphQL, OpenAPI, auth, and seeded SQLite data.
+- A running SvelteKit frontend that can reach the backend through `PUBLIC_API_BASE_URL`.
+- Edge routing for the lab hostnames (`www`, `api`, `wholesale`, `iot`) to the appropriate frontend or backend service for that lab.
+- Deterministic seed credentials and optional `LAB_JWT_PRIVATE_KEY` when the lab depends on stable authentication fixtures.
 
 ---
 

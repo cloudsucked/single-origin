@@ -6,13 +6,13 @@
 
 ## Application overview
 
-Single Origin is a synthetic specialty-coffee e-commerce app used as the origin in Cloudflare Implement / Operate / Troubleshoot AppSec labs. The canonical spec lives at `docs/specs/single-origin-design.md`. Stack: FastAPI + SvelteKit + SQLite, single container on port 8080, served through `cloudflared`.
+Single Origin is a synthetic specialty-coffee e-commerce app used as the origin in Cloudflare Implement / Operate / Troubleshoot AppSec labs. The canonical spec lives at `docs/specs/single-origin-design.md`. Stack: FastAPI + SvelteKit + SQLite; lab-specific infrastructure decides how the frontend and backend services are deployed and routed.
 
 ### Runtime
 
 - `pytest tests/` from `backend/` runs the backend test suite (currently 69 tests).
 - `scripts/export-openapi.py` regenerates `docs/openapi/single-origin.openapi.json`; the `backend-openapi-test` CI job fails if the committed artifact drifts.
-- `scripts/reset-lab.sh` drops and re-seeds `single_origin.db`, then restarts the backend. Flags: `--no-restart` (skip the docker/systemd restart in dev shells), `--quiet` (suppress `[ok]` lines).
+- `scripts/reset-lab.sh` drops and re-seeds `single_origin.db`, then restarts the backend. Flags: `--no-restart` (skip service restart in dev shells), `--quiet` (suppress `[ok]` lines).
 - `scripts/smoke-test.sh` hits every endpoint the 9 Implement AppSec courses depend on. Flag: `--verbose`. Exits non-zero on the first failure.
 
 ### Environment variables
