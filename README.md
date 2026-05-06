@@ -9,7 +9,6 @@ Phases 0-6 are scaffolded with an end-to-end lab baseline:
 - `frontend/` SvelteKit app with core route surfaces and editable Turnstile form templates.
 - `backend/` FastAPI app with seeded SQLite data, broad API surface, GraphQL endpoint, and Turnstile Siteverify helper.
 - `scripts/` VM-friendly helper scripts to run frontend and backend with hot reload.
-- `infra/` optional Docker Compose file for internal reproducibility.
 - `docs/runbooks/` lab operations and VM image validation checklists.
 - `.gitlab-ci.yml` lightweight CI for frontend checks and backend smoke tests.
 
