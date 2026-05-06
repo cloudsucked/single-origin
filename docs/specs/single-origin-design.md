@@ -188,6 +188,11 @@ Roles: `customer`, `wholesale_partner`, `admin`
 | `PUT` | `/api/v1/cart/items/{id}` | Update quantity | Session/JWT |
 | `DELETE` | `/api/v1/cart/items/{id}` | Remove item | Session/JWT |
 
+Cart state is intentionally in-memory for the lab origin. To keep synthetic
+traffic from exhausting the backend process, non-demo cart sessions are pruned
+by `CART_TTL_SECONDS` and capped by `CART_MAX_SESSIONS`; each cart is capped by
+`CART_MAX_ITEMS_PER_SESSION`.
+
 ### Orders (`/api/v1/orders/`)
 
 | Method | Path | Description | Auth |
@@ -865,6 +870,7 @@ Any lab deployment must provide:
 - A running SvelteKit frontend that can reach the backend through `PUBLIC_API_BASE_URL`.
 - Edge routing for the lab hostnames (`www`, `api`, `wholesale`, `iot`) to the appropriate frontend or backend service for that lab.
 - Deterministic seed credentials and optional `LAB_JWT_PRIVATE_KEY` when the lab depends on stable authentication fixtures.
+- A scheduled `scripts/prune-db.sh` run for long-lived pods that receive continuous traffic.
 
 ---
 
